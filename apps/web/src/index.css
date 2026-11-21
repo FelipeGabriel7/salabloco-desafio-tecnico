@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Tokens da marca no formato do shadcn/ui (variáveis CSS). Claro e escuro. */
+:root {
+  --background: #f7f6f3;
+  --foreground: #1c2523;
+  --card: #ffffff;
+  --muted: #efede7;
+  --muted-foreground: #5f6b68;
+  --border: #e3e1da;
+  --input: #dad8d0;
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  --accent: #e2f1ef;
+  --accent-foreground: #0b5f58;
+  --destructive: #b91c1c;
+  --destructive-soft: #fdf2f2;
+  --destructive-border: #f3c9c9;
+  --success: #15803d;
+  --success-soft: #f0fdf4;
+  --room-1: #2563eb;
+  --room-2: #7c3aed;
+  --room-3: #65a30d;
+  --room-4: #a16207;
+  --room-5: #be185d;
+}
+
+.dark {
+  --background: #0e1413;
+  --foreground: #eaf0ee;
+  --card: #151d1c;
+  --muted: #1c2726;
+  --muted-foreground: #9aa8a4;
+  --border: #243130;
+  --input: #2f403e;
+  --primary: #2dd4bf;
+  --primary-foreground: #04211e;
+  --accent: #123532;
+  --accent-foreground: #7de3d6;
+  --destructive: #f87171;
+  --destructive-soft: #2a1415;
+  --destructive-border: #5b2326;
+  --success: #4ade80;
+  --success-soft: #0f2417;
+  --room-1: #60a5fa;
+  --room-2: #a78bfa;
+  --room-3: #a3e635;
+  --room-4: #fbbf24;
+  --room-5: #f472b6;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-border: var(--destructive-border);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Linha do tempo: grade de horas e hachura para reservas de outras empresas */
+.lane-grid {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(7.1429% - 1px),
+    var(--muted) calc(7.1429% - 1px),
+    var(--muted) 7.1429%
+  );
+}
+.hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 5px,
+    rgb(255 255 255 / 0.35) 5px 6px
+  );
+}
