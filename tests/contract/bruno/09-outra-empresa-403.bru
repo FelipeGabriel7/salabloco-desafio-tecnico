@@ -1,0 +1,19 @@
+meta {
+  name: 09 Token de uma empresa na rota de outra (403)
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/companies/{{otherCompanyId}}/bookings
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 403
+}

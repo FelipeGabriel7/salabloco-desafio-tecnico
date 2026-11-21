@@ -1,0 +1,21 @@
+{
+  "name": "salabloco-tests",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test:api": "playwright test --project=api",
+    "test:e2e": "playwright test --project=e2e",
+    "test": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "report": "allure generate allure-results --clean -o allure-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.2",
+    "allure-commandline": "^2.32.0",
+    "allure-playwright": "^3.0.0",
+    "typescript": "^5.7.2"
+  }
+}

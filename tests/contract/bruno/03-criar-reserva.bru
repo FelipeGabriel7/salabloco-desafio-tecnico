@@ -1,0 +1,51 @@
+meta {
+  name: 03 Criar reserva (201)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/companies/{{companyId}}/bookings
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "roomId": "{{roomId}}",
+    "startsAt": "{{startsAt}}",
+    "endsAt": "{{endsAt}}",
+    "title": "Reunião criada pelo Bruno",
+    "responsibleEmail": "ana.souza@acme.com.br"
+  }
+}
+
+script:pre-request {
+  // Amanhã, 12:00 UTC a 13:00 UTC. Sempre no futuro.
+  const t = new Date();
+  t.setUTCDate(t.getUTCDate() + 1);
+  t.setUTCHours(12, 0, 0, 0);
+  bru.setVar("startsAt", t.toISOString());
+  bru.setVar("endsAt", new Date(t.getTime() + 60 * 60 * 1000).toISOString());
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("bookingId", res.body.id);
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+tests {
+  test("devolve a reserva criada com id", function () {
+    expect(res.body.id).to.be.a("string");
+    expect(res.body.roomId).to.equal("savassi");
+  });
+}

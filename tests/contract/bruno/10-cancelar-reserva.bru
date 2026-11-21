@@ -1,0 +1,23 @@
+meta {
+  name: 10 Cancelar reserva (204)
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/companies/{{companyId}}/bookings/{{bookingId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  Usa o id salvo pela requisição 03. Rode a 03 antes.
+}

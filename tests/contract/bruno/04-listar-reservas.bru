@@ -1,0 +1,28 @@
+meta {
+  name: 04 Listar reservas da empresa
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/companies/{{companyId}}/bookings
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("lista só reservas da própria empresa", function () {
+    expect(res.body).to.be.an("array");
+    res.body.forEach(function (b) {
+      expect(b.companyId).to.equal("acme");
+    });
+  });
+}

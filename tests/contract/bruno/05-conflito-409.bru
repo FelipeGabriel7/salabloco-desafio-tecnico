@@ -1,0 +1,38 @@
+meta {
+  name: 05 Sobreposição na mesma sala (409)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/companies/{{companyId}}/bookings
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "roomId": "{{roomId}}",
+    "startsAt": "{{startsAt}}",
+    "endsAt": "{{endsAt}}",
+    "title": "Deve conflitar com a reserva 03",
+    "responsibleEmail": "ana.souza@acme.com.br"
+  }
+}
+
+script:pre-request {
+  // Mesmo horário da requisição 03. Rode a 03 antes.
+  const t = new Date();
+  t.setUTCDate(t.getUTCDate() + 1);
+  t.setUTCHours(12, 30, 0, 0);
+  bru.setVar("startsAt", t.toISOString());
+  bru.setVar("endsAt", new Date(t.getTime() + 60 * 60 * 1000).toISOString());
+}
+
+assert {
+  res.status: eq 409
+}
