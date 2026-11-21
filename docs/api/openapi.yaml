@@ -1,0 +1,282 @@
+openapi: 3.0.3
+info:
+  title: Salabloco API
+  version: 0.1.0
+  description: |
+    Reserva de salas de reunião de um coworking.
+    Datas são ISO 8601 com fuso explícito. Formatos ambíguos são rejeitados (400). O "dia" de uma consulta é o dia em America/Sao_Paulo.
+    Erros seguem o formato { code, message, field? } (ADR 0008).
+servers:
+  - url: http://localhost:3333
+tags:
+  - name: Salas
+    description: Exigem o token de qualquer empresa. Sem token, 401.
+  - name: Reservas
+    description: Exigem o token da empresa do :companyId.
+paths:
+  /rooms:
+    get:
+      tags: [Salas]
+      summary: Lista as salas
+      operationId: listRooms
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Lista de salas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Room' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /rooms/{id}/availability:
+    get:
+      tags: [Salas]
+      summary: Horários ocupados de uma sala em um dia
+      description: |
+        Devolve só os intervalos. Nunca título, e-mail nem empresa.
+        O expediente vai das 07:00 às 22:00, então nenhuma reserva cruza a meia-noite.
+      operationId: getAvailability
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: date
+          in: query
+          required: true
+          description: Dia no formato AAAA-MM-DD, no fuso do coworking
+          schema: { type: string, format: date, example: '2026-11-21' }
+      responses:
+        '200':
+          description: Intervalos ocupados
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Availability' }
+        '400': { $ref: '#/components/responses/InvalidDate' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /companies/{companyId}/bookings:
+    parameters:
+      - $ref: '#/components/parameters/CompanyId'
+    get:
+      tags: [Reservas]
+      summary: Lista as reservas da empresa
+      operationId: listBookings
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Reservas da empresa, ordenadas por início
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Booking' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Reservas]
+      summary: Cria uma reserva
+      operationId: createBooking
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewBooking' }
+      responses:
+        '201':
+          description: Reserva criada
+          headers:
+            Location:
+              schema: { type: string }
+              description: URL da reserva criada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '400': { $ref: '#/components/responses/Validation' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/RuleViolation' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /companies/{companyId}/bookings/{id}:
+    delete:
+      tags: [Reservas]
+      summary: Cancela uma reserva da empresa
+      description: Reserva de outra empresa responde 404, igual a uma que não existe.
+      operationId: deleteBooking
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CompanyId'
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Cancelada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Token fixo da empresa
+  parameters:
+    CompanyId:
+      name: companyId
+      in: path
+      required: true
+      schema: { type: string, example: acme }
+  schemas:
+    Room:
+      type: object
+      required: [id, name, capacity]
+      properties:
+        id: { type: string, example: savassi }
+        name: { type: string, example: Sala Savassi }
+        capacity: { type: integer, example: 6 }
+    Interval:
+      type: object
+      required: [startsAt, endsAt]
+      properties:
+        startsAt: { type: string, format: date-time, example: '2026-11-21T12:00:00.000Z' }
+        endsAt: { type: string, format: date-time, example: '2026-11-21T13:00:00.000Z' }
+    Availability:
+      type: object
+      required: [roomId, date, busy]
+      properties:
+        roomId: { type: string }
+        date: { type: string, format: date }
+        busy:
+          type: array
+          items: { $ref: '#/components/schemas/Interval' }
+    NewBooking:
+      type: object
+      additionalProperties: false
+      required: [roomId, startsAt, endsAt, title, responsibleEmail]
+      properties:
+        roomId: { type: string }
+        startsAt:
+          type: string
+          format: date-time
+          description: ISO 8601 com fuso explícito (Z ou offset). Sem fuso é rejeitado com 400
+        endsAt:
+          type: string
+          format: date-time
+          description: ISO 8601 com fuso explícito. Deve ser depois de startsAt
+        title: { type: string, minLength: 1, maxLength: 80 }
+        responsibleEmail: { type: string, format: email, maxLength: 254 }
+    Booking:
+      allOf:
+        - $ref: '#/components/schemas/NewBooking'
+        - type: object
+          required: [id, companyId, createdAt]
+          properties:
+            id: { type: string, format: uuid }
+            companyId: { type: string }
+            createdAt: { type: string, format: date-time }
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Contrato estável. Mensagem é só para humanos.
+          enum:
+            - VALIDATION
+            - INVALID_DATE
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - NOT_FOUND
+            - BOOKING_CONFLICT
+            - END_BEFORE_START
+            - DURATION_TOO_SHORT
+            - DURATION_TOO_LONG
+            - OUTSIDE_OPENING_HOURS
+            - IN_THE_PAST
+            - ROOM_NOT_FOUND
+            - RATE_LIMITED
+            - INTERNAL
+        message: { type: string }
+        field: { type: string, description: Campo ao qual o erro se refere }
+    Suggestion:
+      type: object
+      required: [roomId, startsAt, endsAt]
+      properties:
+        roomId: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+    ConflictError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            conflict: { $ref: '#/components/schemas/Interval' }
+            suggestions:
+              type: array
+              description: Horários livres próximos (mesma duração) na mesma sala e em outras salas
+              items: { $ref: '#/components/schemas/Suggestion' }
+  responses:
+    Validation:
+      description: Entrada malformada
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: VALIDATION, message: Dados inválidos., field: responsibleEmail }
+    InvalidDate:
+      description: Data ausente, fora do formato ou inexistente
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: INVALID_DATE, message: 'Data inválida. Use AAAA-MM-DD.', field: date }
+    Unauthorized:
+      description: Sem token ou token desconhecido
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: UNAUTHORIZED, message: Token inválido ou ausente. }
+    Forbidden:
+      description: Token de outra empresa que a do companyId
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: FORBIDDEN, message: Você não tem acesso a esta empresa. }
+    NotFound:
+      description: Sala ou reserva não encontrada (reserva de outra empresa também)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: NOT_FOUND, message: Não encontrado. }
+    Conflict:
+      description: A sala já está reservada no horário
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ConflictError' }
+          example:
+            code: BOOKING_CONFLICT
+            message: A sala já está reservada neste horário.
+            conflict: { startsAt: '2026-11-21T12:00:00.000Z', endsAt: '2026-11-21T13:00:00.000Z' }
+            suggestions:
+              - { roomId: savassi, startsAt: '2026-11-21T13:00:00.000Z', endsAt: '2026-11-21T14:00:00.000Z' }
+              - { roomId: curral, startsAt: '2026-11-21T12:00:00.000Z', endsAt: '2026-11-21T13:00:00.000Z' }
+    RuleViolation:
+      description: Regra de negócio violada (duração, passado)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: DURATION_TOO_SHORT, message: A reserva deve ter no mínimo 30 minutos, field: endsAt }
+    RateLimited:
+      description: Limite de requisições excedido
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { code: RATE_LIMITED, message: Muitas requisições. Tente de novo em instantes. }
