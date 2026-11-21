@@ -53,8 +53,8 @@ Tudo em [docs/](docs/README.md). Começos úteis:
 
 ## O que ficou de fora
 
-A ser preenchido ao final. Já sabemos que: tokens fixos não têm rotação nem revogação, a persistência em arquivo vale para um único processo, e não há trilha de auditoria. HTTPS é obrigatório em qualquer ambiente publicado e fica a cargo de quem publica.
+A ser preenchido ao final. Limites que já conheço: tokens fixos não têm rotação nem revogação, a persistência em arquivo vale para um único processo, e não há trilha de auditoria. HTTPS é obrigatório em qualquer ambiente publicado e fica a cargo de quem publica.
 
 ## Uso de IA
 
-A IA (Claude) foi usada no **levantamento de requisitos**, na **interface** (desenho das telas) e apenas no **boilerplate inicial do front-end mockado**. O front (a partir desse ponto), a API, os testes são desenvolvidos pelo autor. Detalhes em [docs/ai/uso-de-ia.md](docs/ai/uso-de-ia.md).
+Usei IA (Claude) no **levantamento de requisitos**, na **interface** (desenho das telas) e só no **boilerplate inicial do front-end mockado**. O restante do front, a API, os testes e as decisões dos ADRs são meus. Detalhes em [docs/ai/uso-de-ia.md](docs/ai/uso-de-ia.md).

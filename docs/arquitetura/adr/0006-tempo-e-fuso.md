@@ -1,24 +1,22 @@
 # ADR 0006. Tempo, fuso horário e expediente
 
-## Contexto
-
-Quase todo bug de reserva de sala é bug de tempo: virada de dia, UTC contra horário local, "agora" instável nos testes, datas que parecem válidas e não são.
-
 ## Decisão
 
-1. Aceito **ISO 8601 com fuso explícito**. Formato ambíguo (data sem hora, hora sem fuso) é rejeitado com 400. Não corrijo nada em silêncio: `2026-02-30` é erro, não 02 de março.
-2. Uso o **fuso `America/Sao_Paulo`, convertido com `Intl`**, sem offset fixo `-03:00`. Ele é configurável por `COWORKING_TIMEZONE`.
-3. Injeto o **relógio** (`now: () => Date`) nos services.
-4. Defino o **expediente das 07:00 às 22:00** como regra de negócio (`OUTSIDE_OPENING_HOURS`). Por isso nenhuma reserva cruza a meia-noite.
-5. Trato o intervalo como **semiaberto** `[início, fim)`: reservas coladas (10:00–11:00 e 11:00–12:00) não conflitam.
+Trato o tempo com rigor, porque quase todo bug de reserva é bug de tempo.
 
-`GET /rooms/:id/availability?date=` devolve toda reserva que se sobrepõe ao dia local (00:00 às 24:00 no fuso do coworking).
+1. **ISO 8601 com fuso explícito.** Formato ambíguo (data sem hora, hora sem fuso) é rejeitado com 400. Não corrijo nada em silêncio: `2026-02-30` é erro, não 02 de março.
+2. **Fuso `America/Sao_Paulo`, convertido com `Intl`**, sem offset fixo `-03:00`. É configurável por `COWORKING_TIMEZONE`.
+3. **Relógio injetado** (`now: () => Date`) nos services, para os testes controlarem a hora.
+4. **Expediente das 07:00 às 22:00** como regra de negócio (`OUTSIDE_OPENING_HOURS`, 422). Por isso nenhuma reserva cruza a meia-noite.
+5. **Intervalo semiaberto** `[início, fim)`: reservas coladas (10:00–11:00 e 11:00–12:00) não conflitam.
 
-## Por que `Intl` e não `-03:00`
+`GET /rooms/:id/availability?date=` devolve toda reserva que se sobrepõe ao dia local, de 00:00 a 24:00 no fuso do coworking.
 
-O offset fixo está certo hoje (o Brasil não tem horário de verão desde 2019), mas é uma suposição escondida: em 2018 São Paulo estava em `-02:00`. Com `Intl` o fuso carrega as regras de cada época. O teste TZ-03 prova isso: o dia `2018-11-20` tem limites calculados com `-02:00`.
+### Por que `Intl` e não `-03:00`
 
-## Entradas
+O offset fixo está certo hoje, porque o Brasil não tem horário de verão desde 2019, mas é uma suposição escondida: em 2018 São Paulo estava em `-02:00`. Com `Intl` o fuso carrega as regras de cada época. O teste TZ-03 prova isso: o dia `2018-11-20` tem limites calculados com `-02:00`.
+
+### Como cada entrada é tratada
 
 | Entrada | Resultado |
 | --- | --- |
@@ -29,13 +27,10 @@ O offset fixo está certo hoje (o Brasil não tem horário de verão desde 2019)
 | `endsAt` igual ou antes de `startsAt` | 422 `END_BEFORE_START` |
 | Início antes das 07:00 ou fim depois das 22:00 | 422 `OUTSIDE_OPENING_HOURS` |
 
-O `Date` do JavaScript corrige datas impossíveis e interpreta strings sem fuso no fuso da máquina. Por isso valido **antes** de qualquer `new Date`.
+O `Date` do JavaScript corrige datas impossíveis e lê strings sem fuso no fuso da máquina. Por isso valido **antes** de qualquer `new Date`.
 
 ## Consequências
 
-| Ganho | Custo |
-| --- | --- |
-| Correto em qualquer época e em outras regiões, por configuração | Calcular o início do dia é mais elaborado que somar `-3h` |
-| Entrada ambígua barrada na borda | O front precisa enviar fuso explícito |
-
-O front ainda usa o offset fixo (`apps/web/src/utils/time.ts`) e deve migrar para `Intl` (tarefa W-01).
+- **Ganho:** o cálculo fica correto em qualquer época e em outras regiões, por configuração, e a entrada ambígua é barrada na borda.
+- **Custo:** calcular o início do dia é mais elaborado que somar `-3h`, e o front precisa enviar fuso explícito.
+- **Pendência:** o front ainda usa o offset fixo (`apps/web/src/utils/time.ts`) e deve migrar para `Intl`.

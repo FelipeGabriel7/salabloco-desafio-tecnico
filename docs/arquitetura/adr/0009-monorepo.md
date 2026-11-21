@@ -1,12 +1,8 @@
 # ADR 0009. Um repositório, uma pasta por domínio
 
-## Contexto
-
-A entrega é **um link de repositório**. Back-end, front-end, testes e documentação precisam estar nele.
-
 ## Decisão
 
-Uso **um único repositório**, com uma pasta por domínio: front, back, testes e docs. Um repositório só atende o requisito de entrega por link único e mantém o "rodar seguindo o README" em poucos comandos; vários repositórios dificultariam a execução e a revisão.
+Uso **um único repositório** com uma pasta por domínio: front, back, testes e docs. O desafio pede entrega por um link só e "rodar seguindo o README" em poucos comandos, e vários repositórios dificultariam a execução e a revisão.
 
 ```
 salabloco/
@@ -19,9 +15,7 @@ salabloco/
 └─ package-lock.json
 ```
 
-## Workspaces
-
-O `package.json` da raiz declara `"workspaces": ["apps/*", "tests"]`. O pacote `tests` entra nos workspaces quando ganhar seu `package.json` (tarefa Q-01). Um `npm ci` na raiz instala tudo.
+O `package.json` da raiz declara `"workspaces": ["apps/*", "tests"]`, e um `npm ci` na raiz instala tudo.
 
 | Script na raiz | O que faz |
 | --- | --- |
@@ -34,8 +28,5 @@ O `package.json` da raiz declara `"workspaces": ["apps/*", "tests"]`. O pacote `
 
 ## Consequências
 
-| Ganho | Custo |
-| --- | --- |
-| Um clone, um `npm ci`, um `npm run dev`: o critério "roda seguindo o README" fica em três comandos | O hoisting de dependências pode confundir no começo |
-| Cada domínio isolado em pasta: fácil de navegar | Sem código compartilhado entre `api` e `web` (tipos e esquemas). Ver [ADR 0004](0004-validacao.md) |
-| `tests/` separado: os testes de caixa-preta ficam fora do código que testam | |
+- **Ganho:** um clone, um `npm ci` e um `npm run dev` resolvem o "rodar seguindo o README". Cada domínio fica isolado numa pasta, e `tests/` fica fora do código que testa.
+- **Custo:** o hoisting de dependências pode confundir no começo, e `api` e `web` não compartilham tipos nem esquemas ([ADR 0004](0004-validacao.md)).

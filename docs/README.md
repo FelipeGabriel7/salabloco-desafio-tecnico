@@ -67,5 +67,5 @@ docs/
 ## Convenções
 
 - Idioma: português nos documentos e na interface. Código e nomes em inglês.
-- Cada ADR descreve contexto, decisão, consequências e alternativas.
+- Cada ADR registra uma decisão minha, com consequências e alternativas.
 - Os IDs (RF, RN, RNF, CA, SEG, UI, S, W, Q, C, D) são estáveis. Commits, testes e PRs os citam.

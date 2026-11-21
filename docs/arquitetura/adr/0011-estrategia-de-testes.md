@@ -1,17 +1,15 @@
 # ADR 0011. Estratégia de testes
 
-Plano de execução em [qa.md](../../qualidade/qa.md).
-
-## Contexto
-
-O critério pede testes que cubram as regras importantes, não só o caminho feliz. O mínimo são 3 testes; como a qualidade é meu diferencial, planejo bem mais.
+O plano de execução está em [qa.md](../../qualidade/qa.md).
 
 ## Decisão
+
+Testo cada regra **no nível mais baixo em que dá para prová-la**. "29 minutos é recusado" é teste unitário, o 422 na rota é teste de API, e a mensagem no campo certo é teste de interface.
 
 | Camada | Ferramenta | O que prova |
 | --- | --- | --- |
 | Unitário | Vitest | Regras e bordas dos services e utilitários, sem rede |
-| API | Playwright (`request`) | Rotas, autenticação, validação, erros, concorrência, privacidade, contra o servidor real |
+| API | Playwright (`request`) | Rotas, autenticação, validação, erros, concorrência e privacidade, contra o servidor real |
 | Interface | Playwright | Só os fluxos críticos |
 | Acessibilidade | axe-core | Violações nas telas principais |
 | Contrato | Bruno CLI | A API responde como o OpenAPI descreve |
@@ -20,30 +18,26 @@ O critério pede testes que cubram as regras importantes, não só o caminho fel
 | Mutação | Stryker nos services | Os testes falham de verdade quando a regra quebra |
 | Relatório | Allure, trace e screenshot | Resultado legível e diagnóstico de falhas |
 
-Testo cada regra **no nível mais baixo em que dá para provar**: "29 minutos é recusado" é unitário; o 422 na rota é de API; a mensagem no campo certo é E2E.
+### Playwright para a API, em vez de supertest
 
-## Playwright para a API (em vez de supertest)
+Escolhi o Playwright pela fidelidade, porque testo o servidor como ele roda, por HTTP, e por usar uma ferramenta só, com um único relatório. O custo é ser mais lento e compartilhar estado entre os testes. Para isolar:
 
-| | Playwright API | supertest |
-| --- | --- | --- |
-| Execução | Servidor real, por HTTP | Dentro do processo |
-| Ferramenta | A mesma da interface, mesmo relatório | Outra ferramenta |
-| Velocidade | Mais lenta | Mais rápida |
-| Isolamento | Estado compartilhado: exige cuidado | App novo por teste |
+- cada execução usa um arquivo de dados temporário (`DB_PATH`);
+- cada teste usa sala e horário próprios e limpa o que criou pela API pública;
+- não existe endpoint de reset;
+- os testes de concorrência e de limite rodam isolados.
 
-Escolhi Playwright pela fidelidade (testo o pacote como ele roda) e por usar uma ferramenta só. Para isolar o estado: arquivo de dados temporário (`DB_PATH`) por execução; cada teste usa sala e horário próprios e limpa o que criou pela API pública; **sem endpoint de reset**; testes de concorrência e de limite rodam isolados.
+O supertest seria mais rápido e criaria um app novo por teste, mas executa dentro do processo e exigiria uma segunda ferramenta.
 
-## Riscos e tratamento
+### Princípios
 
-| Risco | Tratamento |
-| --- | --- |
-| O limite de requisições (429) bloqueia os próprios testes | Limites configuráveis: altos nos testes normais, baixos e isolados nos testes do 429 ([ADR 0012](0012-limite-de-requisicoes.md)) |
-| Teste de carga é lento e instável | Rodo o Artillery separado dos testes normais |
-| Escopo maior que o do enunciado | O [backlog](../../produto/backlog.md) define prioridades. Não corto: testes de regra, de acesso entre empresas e README |
-
-## Princípios
-
-1. Determinismo: relógio injetado, sem `sleep`.
-2. Nomes descrevem comportamento.
+1. Determinismo: relógio injetado e nenhum `sleep`.
+2. Os nomes descrevem comportamento.
 3. Cada caso de aceite (CA-xx) aponta para o teste que o prova.
 4. Testo o que dá errado antes do que dá certo: cada regra tem a borda dos dois lados.
+
+## Consequências
+
+- **Risco:** o limite de requisições (429) bloquearia os próprios testes. Os limites são configuráveis: altos nos testes normais, baixos e isolados nos testes do 429 ([ADR 0012](0012-limite-de-requisicoes.md)).
+- **Risco:** teste de carga é lento e instável, então rodo o Artillery separado.
+- **Escopo:** é maior que o do enunciado. O [backlog](../../produto/backlog.md) define as prioridades, e não corto os testes de regra, de acesso entre empresas e o README.
