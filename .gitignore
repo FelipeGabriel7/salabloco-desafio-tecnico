@@ -1,0 +1,23 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.log
+.DS_Store
+
+# Segredos: só o .env.example é versionado
+.env
+.env.*
+!.env.example
+
+# Transcrição bruta da conversa com a IA: tem dados pessoais e caminhos da máquina.
+# O registro curado do uso de IA está em docs/ai/uso-de-ia.md
+docs/ai/transcript-bruto/
+
+# Relatórios de teste
+allure-results/
+allure-report/
+
+# Configuração local do Claude Code
+.claude/
