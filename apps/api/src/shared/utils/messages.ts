@@ -1,0 +1,16 @@
+export const messages = {
+  invalidJson: "JSON inválido.",
+  invalidRequest: "Dados inválidos.",
+  invalidDate: "Data inválida. Use AAAA-MM-DD.",
+  unauthorized: "Token inválido ou ausente.",
+  forbidden: "Você não tem acesso a esta empresa.",
+  notFound: "Não encontrado.",
+  endBeforeStart: "O fim deve ser depois do início.",
+  durationTooShort: "A reserva deve ter no mínimo 30 minutos.",
+  durationTooLong: "A reserva deve ter no máximo 4 horas.",
+  outsideOpeningHours: "O coworking funciona das 07:00 às 22:00.",
+  inThePast: "Não é possível reservar no passado.",
+  roomNotFound: "Sala não encontrada.",
+  bookingConflict: "A sala já está reservada neste horário.",
+  internal: "Erro inesperado.",
+} as const;

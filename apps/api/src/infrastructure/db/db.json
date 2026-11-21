@@ -1,0 +1,44 @@
+{
+  "companies": [
+    {
+      "id": "acme",
+      "name": "Acme Tecnologia"
+    },
+    {
+      "id": "lumen",
+      "name": "Lumen Estúdio"
+    },
+    {
+      "id": "brisa",
+      "name": "Brisa Contabilidade"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "savassi",
+      "name": "Sala Savassi",
+      "capacity": 6
+    },
+    {
+      "id": "pampulha",
+      "name": "Sala Pampulha",
+      "capacity": 12
+    },
+    {
+      "id": "curral",
+      "name": "Sala Serra do Curral",
+      "capacity": 4
+    },
+    {
+      "id": "liberdade",
+      "name": "Auditório Liberdade",
+      "capacity": 20
+    },
+    {
+      "id": "ufmg",
+      "name": "Sala UFMG",
+      "capacity": 8
+    }
+  ],
+  "bookings": []
+}
