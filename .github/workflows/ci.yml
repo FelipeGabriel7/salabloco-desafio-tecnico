@@ -170,7 +170,7 @@ jobs:
           name: allure-report
           path: tests/allure-report
       - uses: actions/upload-pages-artifact@v3
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
           path: tests/allure-report
       - name: Resumo
@@ -196,7 +196,7 @@ jobs:
   publicar-relatorio:
     name: Publicar Allure no GitHub Pages
     needs: relatorio
-    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -213,7 +213,7 @@ jobs:
   deploy:
     name: Deploy na Vercel (${{ matrix.app }})
     needs: [unitarios, seguranca, sast, contrato, e2e, performance]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment: production
     strategy:
