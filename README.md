@@ -125,6 +125,8 @@ O pipeline fica em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) e roda
 
 ## Deploy na Vercel
 
+**No ar:** front em https://salabloco-web.vercel.app, API em https://salabloco-api.vercel.app/api/health e relatório de testes em https://felipegabriel7.github.io/salabloco-desafio-tecnico/.
+
 São dois projetos na Vercel, um para a API e outro para o front, publicados pelo pipeline depois que todas as etapas passam.
 
 1. Crie o projeto **salabloco-api** com *Root Directory* `apps/api`. Em *Environment Variables*, defina `COMPANY_ACME_TOKEN`, `COMPANY_LUMEN_TOKEN`, `COMPANY_BRISA_TOKEN` (valores novos e longos), `COWORKING_TIMEZONE=America/Sao_Paulo` e `DB_PATH=/tmp/db.json`.
