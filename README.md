@@ -4,7 +4,7 @@ Aplicação de **reserva de salas de reunião de um coworking**. Várias empresa
 
 Este é o meu desafio técnico para desenvolvedor júnior: API em Node.js + TypeScript, front-end em React + TypeScript, testes automatizados e documentação das minhas decisões.
 
-> **Estado atual:** a API Express e o front React estão integrados. O projeto possui testes de unidade, API, contrato, interface, acessibilidade e carga. O Redis está configurado na hospedagem; a seção de deploy descreve as condições e limitações dessa persistência.
+> **Estado atual:** API e front publicados na Vercel, com dados no Upstash Redis. Testes de unidade, API, contrato, interface, acessibilidade e carga rodam no CI, que só publica quando tudo passa.
 
 **[Abrir aplicação](https://salabloco-web.vercel.app/)** · **[Ver relatório Allure](https://felipegabriel7.github.io/salabloco-desafio-tecnico/)** · **[Consultar API](docs/api/api.md)** · **[Decisões de arquitetura](docs/README.md)**
 
@@ -201,26 +201,53 @@ O pipeline executa typecheck, build e testes; **não há comando de lint configu
 
 ## Deploy na Vercel
 
-**No ar:** front em https://salabloco-web.vercel.app, API em https://salabloco-api.vercel.app/api/health e relatório de testes em https://felipegabriel7.github.io/salabloco-desafio-tecnico/.
+A aplicação está publicada em dois projetos na Vercel, e quem publica é o pipeline: só na `main` e só depois de todas as etapas passarem.
 
-São dois projetos na Vercel, um para a API e outro para o front, publicados pelo pipeline depois que todas as etapas passam.
+| Projeto | Pasta | Como roda | Endereço |
+| --- | --- | --- | --- |
+| `salabloco-web` | `apps/web` | Arquivos estáticos do build do Vite | https://salabloco-web.vercel.app |
+| `salabloco-api` | `apps/api` | Express como função serverless (`api/index.ts`) | https://salabloco-api.vercel.app/api/health |
 
-1. Crie o projeto **salabloco-api** com *Root Directory* `apps/api`. Configure os três `COMPANY_*_TOKEN` e `COWORKING_TIMEZONE` como variáveis de ambiente. Conecte um Upstash Redis e configure `KV_REST_API_URL` e `KV_REST_API_TOKEN`, ou `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN`, conforme os nomes fornecidos pela integração.
-2. Crie o projeto **salabloco-web** com *Root Directory* `apps/web`. Se a URL da API não for `https://salabloco-api.vercel.app`, ajuste o `rewrites` em [`apps/web/vercel.json`](apps/web/vercel.json). O front chama `/api` no próprio domínio e a Vercel encaminha para a API, sem CORS.
-3. Em *Settings → Tokens* da Vercel, gere um token. No GitHub, em *Settings → Secrets and variables → Actions*, crie `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_API` e `VERCEL_PROJECT_ID_WEB` (os IDs ficam em *Settings → General* de cada projeto).
-4. Faça push na `main`. O deploy automático pelo Git da Vercel fica desligado (`git.deploymentEnabled: false`): quem publica é o pipeline, e só depois dos testes.
+### Como as peças se ligam
 
-**Persistência na hospedagem:** a integração Redis está configurada no ambiente publicado, conforme a validação de funcionamento. Com URL e token do Redis configurados, a API usa Redis; caso contrário, usa arquivo. Na Vercel, o fallback em `/tmp` é temporário e isolado por instância, portanto **reservas podem desaparecer ou divergir**. Confirme as variáveis no projeto após mudanças de ambiente. No Redis, a gravação só acontece se a instância ainda for dona da trava; se a trava expirou, a operação falha em vez de sobrescrever dados ([ADR 0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md)).
+```mermaid
+flowchart LR
+    Navegador --> Web["salabloco-web"]
+    Web -->|"/api/* (rewrite)"| API["salabloco-api"]
+    API --> Redis["Upstash Redis"]
+    GitHub["GitHub Actions"] -->|"deploy --prebuilt"| Web
+    GitHub -->|"deploy --prebuilt"| API
+```
+
+- **Um domínio só para o navegador.** O front chama `/api` no próprio domínio, e o `rewrites` de [`apps/web/vercel.json`](apps/web/vercel.json) encaminha para a API. Assim não preciso de CORS nem de colocar a URL da API no bundle.
+- **Dados no Redis.** O disco de uma função serverless (`/tmp`) é temporário e separado por instância, então na Vercel os dados ficam num Upstash Redis ligado ao projeto da API. A API detecta o Redis pelas variáveis `KV_REST_API_URL` e `KV_REST_API_TOKEN`, criadas pela própria integração. A trava de escrita também fica no Redis, e a gravação só acontece se a operação ainda for dona da trava: duas instâncias nunca aceitam a mesma sala no mesmo horário ([ADR 0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md)).
+- **Só o pipeline publica.** O deploy automático pelo Git da Vercel fica desligado (`git.deploymentEnabled: false`). O job `deploy` faz o build no runner, com o mesmo código que passou nos testes, e envia o resultado pronto (`vercel deploy --prebuilt --prod`), primeiro a API e depois o front ([ADR 0015](docs/arquitetura/adr/0015-deploy-na-vercel.md)).
+
+### Configuração
+
+| Onde | O que fica lá |
+| --- | --- |
+| Variáveis do `salabloco-api` | `COMPANY_ACME_TOKEN`, `COMPANY_LUMEN_TOKEN`, `COMPANY_BRISA_TOKEN`, `COWORKING_TIMEZONE` e as variáveis do Redis criadas pela integração |
+| Variáveis do `salabloco-web` | Nenhuma |
+| Secrets do GitHub | `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_API` e `VERCEL_PROJECT_ID_WEB` |
+
+Validei em produção: uma reserva criada aparece em 15 leituras simultâneas, o mesmo horário é recusado com 409 e o cancelamento funciona.
+
+### Para publicar em outra conta
+
+1. Crie o projeto da API com *Root Directory* `apps/api` e cadastre os três tokens (valores novos e longos) e o fuso.
+2. Em *Storage*, crie um **Upstash for Redis** e conecte ao projeto da API.
+3. Crie o projeto do front com *Root Directory* `apps/web`. Se a API tiver outro endereço, ajuste o `rewrites` em `apps/web/vercel.json`.
+4. Gere um token em *Account Settings → Tokens* e cadastre os quatro secrets no GitHub (os IDs ficam em *Settings → General* de cada projeto).
+5. Faça push na `main`.
 
 ## O que ainda falta
 
-- No login, token de outra empresa (403) mostra "Confira se a API está ativa" em vez de "token inválido".
-- Limite de requisições (429) e comparação de token com `timingSafeEqual`.
-- Migrar para um banco transacional (Postgres com constraint de exclusão) se o volume crescer, em vez de regravar o banco inteiro a cada escrita.
-- Validar a persistência Redis efetiva no ambiente publicado e os casos de transição de fuso/horário de verão.
-- Adicionar lint ao CI.
-
-Os itens com teste já escrito aparecem no relatório como pendentes ou como falha esperada.
+- No login, token de outra empresa (403) mostra "Confira se a API está ativa" em vez de "token inválido". O teste já existe e aparece no relatório como falha esperada.
+- Limite de requisições (429), proposto no [ADR 0012](docs/arquitetura/adr/0012-limite-de-requisicoes.md).
+- Comparação de token com `timingSafeEqual`.
+- Lint no CI.
+- Se o volume crescer: trocar o Redis por um banco transacional (Postgres com constraint de exclusão), em vez de regravar o banco inteiro a cada escrita.
 
 ## O que ficou de fora
 
