@@ -4,7 +4,7 @@ info:
   version: 0.1.0
   description: |
     Reserva de salas de reunião de um coworking.
-    Datas são ISO 8601 com fuso explícito. Formatos ambíguos são rejeitados (400). O "dia" de uma consulta é o dia em America/Sao_Paulo.
+    Datas são ISO 8601 com fuso explícito. Formatos ambíguos são rejeitados (400). O dia de uma consulta usa o fuso configurado para o coworking, cujo padrão é America/Sao_Paulo.
     Erros seguem o formato { code, message, field? } (ADR 0008).
 servers:
   - url: http://localhost:3333
@@ -79,7 +79,7 @@ paths:
   /api/rooms/{id}/availability:
     get:
       tags: [Salas]
-      summary: Horários ocupados de uma sala em um dia
+      summary: Intervalos livres e ocupados de uma sala em um dia
       description: |
         Devolve só os intervalos. Nunca título, e-mail nem empresa.
         O expediente vai das 07:00 às 22:00, então nenhuma reserva cruza a meia-noite.
@@ -97,7 +97,7 @@ paths:
           schema: { type: string, format: date, example: '2026-11-21' }
       responses:
         '200':
-          description: Intervalos ocupados
+          description: Intervalos livres e ocupados
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Availability' }
