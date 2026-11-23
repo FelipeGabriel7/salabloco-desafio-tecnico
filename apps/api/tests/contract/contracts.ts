@@ -8,7 +8,7 @@ export const contracts = {
   config: z.object({ timezone: z.string() }).strict(),
   companies: z.array(z.object({ id: z.string(), name: z.string() }).strict()),
   rooms: z.array(z.object({ id: z.string(), name: z.string(), capacity: z.number().int().positive() }).strict()),
-  availability: z.object({ roomId: z.string(), date: z.string().date(), busy: z.array(slot) }).strict(),
+  availability: z.object({ roomId: z.string(), date: z.string().date(), busy: z.array(slot), free: z.array(slot) }).strict(),
   booking: z
     .object({
       id: z.string().uuid(),

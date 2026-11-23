@@ -38,6 +38,26 @@ describe("disponibilidade", () => {
       "2026-11-25T08:00:00-03:00",
       "2026-11-25T15:00:00-03:00",
     ]);
+    expect(res.body.free).toEqual([
+      { startsAt: "2026-11-25T10:00:00.000Z", endsAt: "2026-11-25T11:00:00.000Z" },
+      { startsAt: "2026-11-25T12:00:00.000Z", endsAt: "2026-11-25T18:00:00.000Z" },
+      { startsAt: "2026-11-25T19:00:00.000Z", endsAt: "2026-11-26T01:00:00.000Z" },
+    ]);
+  });
+
+  it("mostra todo o expediente quando não há reservas", async () => {
+    const res = await availability("savassi", "2026-11-25");
+    expect(res.body.free).toEqual([
+      { startsAt: "2026-11-25T10:00:00.000Z", endsAt: "2026-11-26T01:00:00.000Z" },
+    ]);
+  });
+
+  it("retorna nenhum período livre quando o expediente está ocupado", async () => {
+    for (const [start, end] of [["07:00", "11:00"], ["11:00", "15:00"], ["15:00", "19:00"], ["19:00", "22:00"]]) {
+      const res = await create("acme", booking({ startsAt: at(start), endsAt: at(end) }));
+      expect(res.status).toBe(201);
+    }
+    expect((await availability("savassi", "2026-11-25")).body.free).toEqual([]);
   });
 });
 

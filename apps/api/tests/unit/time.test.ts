@@ -38,6 +38,10 @@ describe("expediente", () => {
   ])("%s até %s dentro do expediente: %s", (start, end, expected) => {
     expect(isWithinOpeningHours(local(start), local(end), SP)).toBe(expected);
   });
+
+  it("não aceita segundos depois do fechamento", () => {
+    expect(isWithinOpeningHours(local("21:00"), Date.parse("2026-11-25T22:00:01-03:00"), SP)).toBe(false);
+  });
 });
 
 describe("sobreposição de intervalos", () => {

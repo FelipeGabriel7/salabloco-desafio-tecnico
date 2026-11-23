@@ -232,12 +232,16 @@ components:
         endsAt: { type: string, format: date-time, example: '2026-11-21T13:00:00.000Z' }
     Availability:
       type: object
-      required: [roomId, date, busy]
+      required: [roomId, date, busy, free]
       properties:
         roomId: { type: string }
         date: { type: string, format: date }
         busy:
           type: array
+          items: { $ref: '#/components/schemas/Interval' }
+        free:
+          type: array
+          description: Períodos livres no expediente; a reserva ainda deve respeitar duração e horário atual.
           items: { $ref: '#/components/schemas/Interval' }
     NewBooking:
       type: object

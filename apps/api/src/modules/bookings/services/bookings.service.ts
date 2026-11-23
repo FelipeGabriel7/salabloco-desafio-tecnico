@@ -80,21 +80,36 @@ export async function getAvailability(
 
   const { start, end } = getDayRange(date, timezone);
   const bookings = await listRoomBookings(path, roomId);
+  const busy = bookings
+    .filter((booking) => overlaps(start, end, Date.parse(booking.startsAt), Date.parse(booking.endsAt)))
+    .map(({ startsAt, endsAt }) => ({ startsAt, endsAt }))
+    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+
+  const opening = localDateTimeToUtc(date, 7, 0, timezone).getTime();
+  const closing = localDateTimeToUtc(date, 22, 0, timezone).getTime();
+  const free: Array<{ startsAt: string; endsAt: string }> = [];
+  let availableFrom = opening;
+
+  for (const slot of busy) {
+    const busyStart = Math.max(opening, Date.parse(slot.startsAt));
+    const busyEnd = Math.min(closing, Date.parse(slot.endsAt));
+
+    if (busyEnd <= opening || busyStart >= closing) continue;
+    if (busyStart > availableFrom) {
+      free.push({ startsAt: new Date(availableFrom).toISOString(), endsAt: new Date(busyStart).toISOString() });
+    }
+    availableFrom = Math.max(availableFrom, busyEnd);
+  }
+
+  if (availableFrom < closing) {
+    free.push({ startsAt: new Date(availableFrom).toISOString(), endsAt: new Date(closing).toISOString() });
+  }
 
   return {
     roomId,
     date,
-    busy: bookings
-      .filter((booking) =>
-        overlaps(
-          start,
-          end,
-          Date.parse(booking.startsAt),
-          Date.parse(booking.endsAt),
-        ),
-      )
-      .map(({ startsAt, endsAt }) => ({ startsAt, endsAt }))
-      .sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+    busy,
+    free,
   };
 }
 

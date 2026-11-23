@@ -18,6 +18,8 @@ Contrato formal em [openapi.yaml](openapi.yaml). Requisições de exemplo na col
 
 `/api/health`, `GET /api/companies` e `GET /api/rooms` são públicos. `GET /api/config` devolve apenas o fuso configurado e exige token. Disponibilidade exige qualquer token; as rotas de reservas exigem o token da empresa do `:companyId`.
 
+A disponibilidade devolve `busy` com intervalos ocupados e `free` com períodos livres dentro do expediente. Períodos livres podem incluir horários passados ou menores que a duração mínima; a criação continua validando as regras e concorrência.
+
 A empresa vem **sempre do token**. O `:companyId` da URL só é conferido: se divergir, 403. O `companyId` nunca vai no corpo.
 
 ## Exemplo

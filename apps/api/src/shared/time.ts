@@ -50,7 +50,8 @@ export function isWithinOpeningHours(start: number, end: number, timezone: strin
   const startMinute = Number(startLocal.hour) * 60 + Number(startLocal.minute);
   const endMinute = Number(endLocal.hour) * 60 + Number(endLocal.minute);
 
-  return isSameDay && startMinute >= 420 && endMinute <= 1320;
+  const endsAtClosing = endMinute === 1320 && end % 60_000 === 0;
+  return isSameDay && startMinute >= 420 && (endMinute < 1320 || endsAtClosing);
 }
 
 export function getDayRange(date: string, timezone: string) {
