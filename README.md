@@ -6,6 +6,9 @@ Este é o meu desafio técnico para desenvolvedor júnior: API em Node.js + Type
 
 > **Estado atual:** a API Express e o front React estão ligados e cobertos por testes de unidade, API, contrato, interface, acessibilidade e performance, todos rodando no CI.
 
+- Aplicação publicada em produção: https://salabloco-web.vercel.app/
+- API Publicada em produção: https://salabloco-api.vercel.app/api/health
+
 ## Como rodar
 
 Requisito: **Node 22 ou mais novo**.
