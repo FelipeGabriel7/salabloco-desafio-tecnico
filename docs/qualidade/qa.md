@@ -145,7 +145,7 @@ tests/
 
 ## Dados de teste
 
-Tokens de demonstração vêm do ambiente (`.env`), nunca escritos nos testes. Salas vêm do seed. Relógio fixo nos unitários.
+Os testes aceitam tokens pelo ambiente; fixtures e `.env.example` também contêm valores fictícios para execução local. Nunca use esses valores como credenciais reais. As salas vêm do seed e os testes de tempo da API controlam o relógio quando necessário.
 
 ## Exploração manual antes de entregar
 
