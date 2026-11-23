@@ -2,6 +2,9 @@ const acmeToken = process.env.COMPANY_ACME_TOKEN;
 const lumenToken = process.env.COMPANY_LUMEN_TOKEN;
 const brisaToken = process.env.COMPANY_BRISA_TOKEN;
 
+const redisUrl = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+
 if (!acmeToken || !lumenToken || !brisaToken) {
   throw new Error("Defina os três tokens de empresa no arquivo .env.");
 }
@@ -12,6 +15,7 @@ export const config = {
   dbPath:
     process.env.DB_PATH ??
     (process.env.VERCEL ? "/tmp/salabloco.json" : "./data/db.json"),
+  redis: redisUrl && redisToken ? { url: redisUrl, token: redisToken } : undefined,
   companyTokens: [
     { companyId: "acme", token: acmeToken },
     { companyId: "lumen", token: lumenToken },

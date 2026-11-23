@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { storage } from "../../src/infrastructure/persistence/storage.ts";
 import { at, booking, create, freezeClock, list, resetDatabase } from "../helpers.ts";
 
 beforeEach(async () => {
@@ -84,8 +84,8 @@ describe("concorrência", () => {
     expect(statuses.filter((status) => status === 201)).toHaveLength(1);
     expect(statuses.filter((status) => status === 409)).toHaveLength(9);
 
-    const file = JSON.parse(await readFile(process.env.DB_PATH!, "utf8"));
-    expect(file.bookings.filter((item: { roomId: string }) => item.roomId === "ufmg")).toHaveLength(1);
+    const database = await storage.read(process.env.DB_PATH!);
+    expect(database.bookings.filter((item: { roomId: string }) => item.roomId === "ufmg")).toHaveLength(1);
     expect((await list("brisa")).body).toHaveLength(1);
   });
 

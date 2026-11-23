@@ -1,8 +1,8 @@
-import { rm } from "node:fs/promises";
 import request from "supertest";
 import { vi } from "vitest";
 import { app } from "../src/app.ts";
 import { seedDatabase } from "../src/infrastructure/db/seed.ts";
+import { storage } from "../src/infrastructure/persistence/storage.ts";
 
 export type CompanyId = "acme" | "lumen" | "brisa";
 
@@ -55,7 +55,7 @@ export function availability(roomId: string, date: string, company: CompanyId = 
 }
 
 export async function resetDatabase() {
-  await rm(process.env.DB_PATH!, { force: true });
+  await storage.save(process.env.DB_PATH!, { companies: [], rooms: [], bookings: [] });
   await seedDatabase(process.env.DB_PATH!);
 }
 

@@ -43,6 +43,7 @@ docs/
 | [0013](arquitetura/adr/0013-configuracao-e-segredos.md) | Configuração e segredos: `.env` e `.env.example` |
 | [0014](arquitetura/adr/0014-enums-e-interfaces.md) | Enums e interfaces como contrato de tipos |
 | [0015](arquitetura/adr/0015-deploy-na-vercel.md) | Deploy na Vercel, pelo pipeline |
+| [0016](arquitetura/adr/0016-redis-na-hospedagem.md) | Redis na hospedagem, arquivo no ambiente local |
 
 ## API
 

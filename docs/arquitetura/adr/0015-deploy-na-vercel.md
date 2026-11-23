@@ -12,8 +12,8 @@ Publico **API e front como dois projetos na Vercel**, e quem publica é o **pipe
 ## Consequências
 
 - **Ganho:** link público para demonstração, deploy repetível e bloqueado por testes.
-- **Limite:** a função serverless só pode gravar em `/tmp`, que é temporário. As reservas se perdem quando a função é reciclada, e instâncias diferentes não compartilham a fila de escrita ([ADR 0007](0007-concorrencia.md)).
-- **Saída:** trocar o repository JSON por um banco gerenciado, sem mexer em services e controllers ([ADR 0003](0003-persistencia.md)).
+- **Limite:** a função serverless só pode gravar em `/tmp`, que é temporário e separado por instância ([ADR 0007](0007-concorrencia.md)).
+- **Como resolvi:** na Vercel os dados e a trava de escrita ficam num Redis gerenciado, sem mexer em services e controllers ([ADR 0016](0016-redis-na-hospedagem.md)).
 
 ## Alternativas descartadas
 

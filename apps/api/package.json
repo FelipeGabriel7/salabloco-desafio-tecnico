@@ -8,9 +8,11 @@
     "start": "node --env-file=.env --experimental-strip-types src/server.ts",
     "seed": "node --env-file=.env --experimental-strip-types src/infrastructure/db/seed.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:redis": "docker compose -f compose.redis.yml up -d --wait && node --env-file=tests/redis.env ../../node_modules/vitest/vitest.mjs run"
   },
   "dependencies": {
+    "@upstash/redis": "^1.41.0",
     "express": "^5.1.0",
     "zod": "^4.6.7"
   },

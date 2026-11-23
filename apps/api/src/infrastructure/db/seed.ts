@@ -1,7 +1,5 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
 import { config } from "../../shared/config.ts";
-import type { Database } from "../../shared/types.ts";
+import { storage } from "../persistence/storage.ts";
 
 export const seedData = {
   companies: [
@@ -18,31 +16,22 @@ export const seedData = {
   ],
 };
 
-export async function seedDatabase(path: string): Promise<void> {
-  const file = resolve(path);
-  await mkdir(dirname(file), { recursive: true });
-  let db: Database = { ...seedData, bookings: [] };
+export function seedDatabase(path: string): Promise<void> {
+  return storage.exclusive(async () => {
+    const db = await storage.read(path);
+    db.companies ??= [];
+    db.rooms ??= [];
+    db.bookings ??= [];
 
-  try {
-    db = JSON.parse(await readFile(file, "utf8")) as Database;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-  }
+    for (const company of seedData.companies)
+      if (!db.companies.some((item) => item.id === company.id))
+        db.companies.push(company);
 
-  db.companies ??= [];
-  db.rooms ??= [];
-  db.bookings ??= [];
+    for (const room of seedData.rooms)
+      if (!db.rooms.some((item) => item.id === room.id)) db.rooms.push(room);
 
-  for (const company of seedData.companies)
-    if (!db.companies.some((item) => item.id === company.id))
-      db.companies.push(company);
-
-  for (const room of seedData.rooms)
-    if (!db.rooms.some((item) => item.id === room.id)) db.rooms.push(room);
-
-  const temp = `${file}.tmp`;
-  await writeFile(temp, `${JSON.stringify(db, null, 2)}\n`, "utf8");
-  await rename(temp, file);
+    await storage.save(path, db);
+  });
 }
 
 if (process.argv[1]?.endsWith("seed.ts")) {

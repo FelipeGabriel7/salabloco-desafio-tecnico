@@ -99,6 +99,20 @@ jobs:
           name: bruno
           path: tests/reports/bruno.html
 
+  redis:
+    name: API com Redis
+    needs: unitarios
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run setup
+      - run: npm run test:api:redis
+
   e2e:
     name: Interface (Playwright)
     needs: unitarios
@@ -149,7 +163,7 @@ jobs:
 
   relatorio:
     name: Relatório Allure
-    needs: [unitarios, seguranca, sast, contrato, e2e, performance]
+    needs: [unitarios, seguranca, sast, contrato, redis, e2e, performance]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -184,6 +198,7 @@ jobs:
             echo "| Segurança (DevSecOps) | ${{ needs.seguranca.result }} |"
             echo "| Análise estática (CodeQL) | ${{ needs.sast.result }} |"
             echo "| Contrato (Bruno) | ${{ needs.contrato.result }} |"
+            echo "| API com Redis | ${{ needs.redis.result }} |"
             echo "| Interface (Playwright) | ${{ needs.e2e.result }} |"
             echo "| Performance (Artillery) | ${{ needs.performance.result }} |"
             echo ""
@@ -212,7 +227,7 @@ jobs:
 
   deploy:
     name: Deploy na Vercel (${{ matrix.app }})
-    needs: [unitarios, seguranca, sast, contrato, e2e, performance]
+    needs: [unitarios, seguranca, sast, contrato, redis, e2e, performance]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment: production

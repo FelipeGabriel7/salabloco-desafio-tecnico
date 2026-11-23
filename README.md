@@ -88,9 +88,10 @@ Cada decisão tem um ADR com o motivo, as consequências e as alternativas que d
 | 404, e não 403, para reserva alheia | Não confirma que o id existe | [0005](docs/arquitetura/adr/0005-autenticacao.md) |
 | ISO 8601 com fuso, via `Intl` | Correto em qualquer época, e entrada ambígua é rejeitada | [0006](docs/arquitetura/adr/0006-tempo-e-fuso.md) |
 | Escrita em fila, com a checagem de conflito dentro | Duas empresas nunca reservam a mesma sala | [0007](docs/arquitetura/adr/0007-concorrencia.md) |
+| Redis na Vercel, arquivo no local | O disco da função serverless é temporário; o repository não muda | [0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md) |
 | Nenhum segredo no código | `.env` fora do git e `.env.example` versionado | [0013](docs/arquitetura/adr/0013-configuracao-e-segredos.md) |
 
-A lista completa dos 15 ADRs está em [docs/](docs/README.md).
+A lista completa dos 16 ADRs está em [docs/](docs/README.md).
 
 ## Testes
 
@@ -129,12 +130,12 @@ O pipeline fica em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) e roda
 
 São dois projetos na Vercel, um para a API e outro para o front, publicados pelo pipeline depois que todas as etapas passam.
 
-1. Crie o projeto **salabloco-api** com *Root Directory* `apps/api`. Em *Environment Variables*, defina `COMPANY_ACME_TOKEN`, `COMPANY_LUMEN_TOKEN`, `COMPANY_BRISA_TOKEN` (valores novos e longos), `COWORKING_TIMEZONE=America/Sao_Paulo` e `DB_PATH=/tmp/db.json`.
+1. Crie o projeto **salabloco-api** com *Root Directory* `apps/api`. Em *Environment Variables*, defina `COMPANY_ACME_TOKEN`, `COMPANY_LUMEN_TOKEN`, `COMPANY_BRISA_TOKEN` (valores novos e longos), `COWORKING_TIMEZONE=America/Sao_Paulo`. Em *Storage*, crie um **Upstash Redis** e ligue ao projeto: a integração cria `KV_REST_API_URL` e `KV_REST_API_TOKEN`, e a API passa a usar o Redis sozinha.
 2. Crie o projeto **salabloco-web** com *Root Directory* `apps/web`. Se a URL da API não for `https://salabloco-api.vercel.app`, ajuste o `rewrites` em [`apps/web/vercel.json`](apps/web/vercel.json). O front chama `/api` no próprio domínio e a Vercel encaminha para a API, sem CORS.
 3. Em *Settings → Tokens* da Vercel, gere um token. No GitHub, em *Settings → Secrets and variables → Actions*, crie `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_API` e `VERCEL_PROJECT_ID_WEB` (os IDs ficam em *Settings → General* de cada projeto).
 4. Faça push na `main`. O deploy automático pelo Git da Vercel fica desligado (`git.deploymentEnabled: false`): quem publica é o pipeline, e só depois dos testes.
 
-**Limite importante:** na Vercel a API roda como função serverless, e o disco (`/tmp`) é temporário. As reservas somem quando a função é reciclada, e cada instância tem a própria fila de escrita. Serve para demonstração. Para guardar dados de verdade, a migração é trocar o repository por um banco ([ADR 0003](docs/arquitetura/adr/0003-persistencia.md), [ADR 0015](docs/arquitetura/adr/0015-deploy-na-vercel.md)).
+**Persistência na hospedagem:** na Vercel a API roda como função serverless, e o disco (`/tmp`) é temporário e separado por instância. Por isso, lá os dados ficam no Redis, e a trava de escrita também, o que mantém a regra de não sobrepor reservas entre instâncias. Local, testes e CI seguem com o arquivo JSON ([ADR 0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md)).
 
 ## O que ainda falta
 
