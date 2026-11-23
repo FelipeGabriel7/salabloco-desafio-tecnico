@@ -1,5 +1,7 @@
 # ADR 0004. Validação com zod em middleware
 
+> **Atualização:** o schema Zod de reservas é chamado pelo controller via `safeParse`, não por middleware genérico. Os códigos são strings e as mensagens são em português; não há enum/catálogo i18n implementado. O limite atual do body é 16 KB.
+
 ## Decisão
 
 Valido toda entrada com **zod**, num middleware `validation(schema)` aplicado na rota, **antes do controller**.

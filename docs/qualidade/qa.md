@@ -1,5 +1,7 @@
 # Estratégia de QA
 
+> **Leitura da matriz:** os casos abaixo incluem cenários planejados e objetivos de cobertura, não apenas testes implementados. Stryker, execução semanal de performance e rate limit não estão configurados no pipeline atual; consulte os testes e a execução do CI para verificar cobertura e resultados reais.
+
 Decisão no [ADR 0011](../arquitetura/adr/0011-estrategia-de-testes.md). Aqui: o que testar, em que nível e como cada regra é provada.
 
 ## Pirâmide
@@ -42,7 +44,7 @@ Nível: **U** unitário, **A** API, **E** interface.
 | CA-05 | 4 horas e 1 minuto | 422 `DURATION_TOO_LONG` | U, A |
 | CA-06 | Fim igual ou antes do início | 422 `END_BEFORE_START` | U |
 | CA-06b | Início às 06:30 ou fim às 22:30 | 422 `OUTSIDE_OPENING_HOURS` | U, A |
-| CA-06c | Início às 07:00 e fim às 22:00 | 201 | U |
+| CA-06c | Reserva começa às 07:00 ou termina às 22:00, com duração válida | 201 | A |
 | CA-07 | Início no passado, com relógio fixo | 422 `IN_THE_PAST` | U, A |
 | CA-07b | Começar exatamente agora | 201 | U |
 | CA-08 | Sobreposição parcial na mesma sala | 409 com `conflict` e `suggestions` | U, A, E |
@@ -83,7 +85,7 @@ Nível: **U** unitário, **A** API, **E** interface.
 | CA-19 | Cancelar reserva própria | 204 |
 | CA-20 | Cancelar reserva de outra empresa, ou inexistente | 404, corpo idêntico |
 | CA-21 | Disponibilidade com token de qualquer empresa | Só `startsAt` e `endsAt` |
-| CA-23 | Lista com várias empresas | Só as da empresa do token |
+| CA-31 | Lista com várias empresas | Só as da empresa do token |
 
 Segurança: SEG-01 a SEG-17 em [seguranca.md](seguranca.md).
 
@@ -100,7 +102,7 @@ Segurança: SEG-01 a SEG-17 em [seguranca.md](seguranca.md).
 | UI-07 | Criar com sucesso | Aviso e reserva na lista |
 | UI-08 | Conflito (409) | Alerta com foco e sugestões |
 | UI-09 | 429 | Mensagem com o tempo de espera |
-| UI-10 | Agenda | Clique no início e no fim. Alerta se passar de 4 horas ou tiver menos de 30 minutos |
+| UI-10 | Reserva | Campos de início/fim validam expediente e duração |
 | UI-11 | Isolamento | Empresa A não vê reserva da B |
 | UI-12 | Acessibilidade | Sem violação grave no axe |
 | UI-13 | Tema claro e escuro | Persiste e é legível |

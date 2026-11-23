@@ -1,5 +1,7 @@
 # ADR 0012. Limite de requisições (429)
 
+> **Status: proposta, não implementada.** O conteúdo abaixo descreve uma alternativa planejada, não um controle existente. A API atual não registra middleware de rate limit nem retorna `429` por esse motivo.
+
 ## Decisão
 
 Protejo a API contra força bruta de token e esgotamento de recursos, com bloqueio temporário proporcional ao pico.

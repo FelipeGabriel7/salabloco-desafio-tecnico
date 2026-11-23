@@ -1,10 +1,12 @@
 # ADR 0003. Persistência em arquivo JSON, com seed e repositories
 
+> **Atualização:** esta decisão descreve a solução local inicial. O armazenamento atual também pode usar Redis, conforme [ADR 0016](0016-redis-na-hospedagem.md). A escolha ocorre pela abstração `Storage`; não existem três interfaces de repository no código.
+
 ## Decisão
 
-O banco de dados é **um único arquivo JSON** (`db.json`), e o código só o acessa por interfaces de repository: `CompanyRepository`, `RoomRepository` e `BookingRepository`. A implementação fica em `apps/api/src/infrastructure/persistence/json/`.
+No ambiente local, os dados ficam em **um único arquivo JSON**. O repository em `apps/api/src/infrastructure/persistence/json/` usa uma abstração de armazenamento, com implementações em arquivo e Redis.
 
-Escolhi o arquivo porque o desafio não pede banco, mas os dados precisam sobreviver a um reinício. A interface de repository mantém essa escolha trocável: nenhuma regra de negócio sabe que existe um arquivo.
+Escolhi o arquivo porque o desafio não exige banco e, em disco persistente local, os dados sobrevivem ao reinício. O service importa funções do repository; a troca entre arquivo e Redis ocorre abaixo dele, na camada `Storage`.
 
 ```json
 {
@@ -20,7 +22,7 @@ Quem insere empresas e salas no arquivo é o **back-end**. O front não conhece 
 
 - A fonte é `apps/api/src/infrastructure/db/seed.ts`, versionado. Ele roda na subida do servidor e por `npm run seed -w apps/api`.
 - É **idempotente**: insere só o que falta, comparando por `id`, e nunca apaga nem altera reservas.
-- Versiono o seed, não os dados: o `db.json` fica **fora do git** e nasce na primeira execução.
+- O arquivo apontado por `DB_PATH` deve ficar fora do git e nasce na primeira execução. O caminho `apps/api/src/infrastructure/db/db.json` já está rastreado: não inclua dados pessoais ou reservas reais nele.
 - O caminho vem de `DB_PATH`, então cada execução de teste usa um arquivo temporário próprio, já semeado.
 
 ### Tokens não ficam no arquivo
@@ -30,14 +32,14 @@ A empresa no JSON tem só `id` e `name`. O token vem do ambiente (`COMPANY_<ID>_
 ## Consequências
 
 **Ganho**
-- Os dados sobrevivem ao reinício.
+- Em disco local persistente, os dados sobrevivem ao reinício.
 - Mudar uma sala é mudar o seed, não a lógica.
-- Trocar de banco afeta só a implementação dos repositories.
+- Arquivo e Redis compartilham o mesmo repository e a interface `Storage`.
 
 **Custo e como trato**
 - **Escritas simultâneas corrompem o arquivo.** Uso uma fila de escrita ([ADR 0007](0007-concorrencia.md)).
 - **Queda no meio de uma gravação.** Gravo num arquivo temporário e renomeio, então o arquivo anterior continua íntegro.
-- **Dado pessoal em disco.** O arquivo guarda e-mails de responsáveis, por isso fica fora do git e é tratado como sensível ([segurança](../../qualidade/seguranca.md)).
+- **Dado pessoal em disco.** O arquivo guarda e-mails de responsáveis; mantenha o `DB_PATH` ativo fora do git e trate-o como sensível ([segurança](../../qualidade/seguranca.md)).
 - **Escala.** O arquivo é lido inteiro e reescrito a cada mudança. Neste volume não pesa, e registro como limite conhecido.
 
 ## Alternativas descartadas
@@ -48,4 +50,4 @@ A empresa no JSON tem só `id` e `name`. O token vem do ambiente (`COMPANY_<ID>_
 
 ## Migração futura
 
-Migrar é escrever outra implementação (`FirestoreBookingRepository`, `SqlBookingRepository`) e escolher qual usar por configuração (`PersistenceDriver`). Services e controllers não mudam, e a atomicidade que hoje vem da fila passaria a vir de uma transação do banco.
+Migrar para um banco transacional exige implementação e testes específicos. Não há `PersistenceDriver` nem repositories SQL/Firestore implementados; não é possível garantir que a mudança afetaria apenas um arquivo.

@@ -122,7 +122,6 @@ paths:
                 items: { $ref: '#/components/schemas/Booking' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/RateLimited' }
     post:
       tags: [Reservas]
       summary: Cria uma reserva
@@ -148,7 +147,6 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/RuleViolation' }
-        '429': { $ref: '#/components/responses/RateLimited' }
   /api/companies/{companyId}/bookings/{id}:
     put:
       tags: [Reservas]
@@ -179,7 +177,6 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/RuleViolation' }
-        '429': { $ref: '#/components/responses/RateLimited' }
     delete:
       tags: [Reservas]
       summary: Cancela uma reserva da empresa
@@ -197,7 +194,6 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '429': { $ref: '#/components/responses/RateLimited' }
 components:
   securitySchemes:
     bearerAuth:
@@ -288,7 +284,6 @@ components:
             - OUTSIDE_OPENING_HOURS
             - IN_THE_PAST
             - ROOM_NOT_FOUND
-            - RATE_LIMITED
             - INTERNAL
         message: { type: string }
         field: { type: string, description: Campo ao qual o erro se refere }
@@ -358,12 +353,3 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
           example: { code: DURATION_TOO_SHORT, message: A reserva deve ter no mínimo 30 minutos, field: endsAt }
-    RateLimited:
-      description: Limite de requisições excedido
-      headers:
-        Retry-After:
-          schema: { type: integer }
-      content:
-        application/json:
-          schema: { $ref: '#/components/schemas/Error' }
-          example: { code: RATE_LIMITED, message: Muitas requisições. Tente de novo em instantes. }

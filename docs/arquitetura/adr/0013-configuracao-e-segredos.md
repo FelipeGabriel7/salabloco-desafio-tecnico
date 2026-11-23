@@ -2,7 +2,7 @@
 
 ## Decisão
 
-**Nenhum segredo, chave, token ou parâmetro operacional fica no código**, porque o que vai para o git fica no histórico para sempre. Tudo vem de variáveis de ambiente.
+Credenciais de empresa e conexão devem vir do ambiente, porque o que vai para o git fica no histórico. Existem valores locais fictícios em `.env.example` e nos scripts de teste; eles não devem ser usados como credenciais reais.
 
 | Arquivo | Versionado | Conteúdo |
 | --- | --- | --- |
@@ -13,10 +13,10 @@ Há um par por aplicação: `apps/api`, `apps/web`, `tests` e a coleção Bruno.
 
 ### Regras
 
-1. `process.env` só é lido em `apps/api/src/shared/config/env.ts`. O resto recebe a configuração tipada.
-2. `loadConfig(env): AppConfig` é uma função pura: valida com zod e devolve uma interface. Os testes passam um objeto próprio.
-3. **Falha rápida no boot:** variável ausente ou inválida impede o servidor de subir, e a mensagem lista o **nome** da variável, nunca o valor.
-4. **Produção recusa valores de exemplo:** com `NODE_ENV=production`, um token igual ao do exemplo ou com menos de 24 caracteres impede o boot.
+1. O back-end lê a configuração principal em `apps/api/src/shared/config.ts`. O código de hospedagem também consulta variáveis de ambiente.
+2. `config.ts` exporta um objeto; não há `loadConfig` puro nem validação Zod completa do ambiente.
+3. Os três tokens de empresa ausentes impedem a inicialização. A mensagem não inclui os valores.
+4. A implementação atual **não recusa automaticamente** tokens de exemplo ou curtos em produção; configure valores próprios e fortes.
 5. Tokens são lidos do ambiente para memória e nunca vão para código, `db.json`, log ou resposta. Para este desafio, a API compara o token diretamente; um produto real deve guardar hashes e comparar em tempo constante ([ADR 0005](0005-autenticacao.md)).
 6. Carrego o ambiente com `node --env-file=.env`, sem a dependência `dotenv`.
 
@@ -34,13 +34,13 @@ O contrato completo está em [`apps/api/.env.example`](../../../apps/api/.env.ex
 | `COWORKING_TIMEZONE` | Fuso ([ADR 0006](0006-tempo-e-fuso.md)) |
 | `DB_PATH` | Arquivo de dados ([ADR 0003](0003-persistencia.md)) |
 | `COMPANY_<ID>_TOKEN` | Token de cada empresa |
-| `RATE_LIMIT_*`, `AUTH_FAIL_*`, `AUTH_BLOCK_SECONDS` | Limite de requisições ([ADR 0012](0012-limite-de-requisicoes.md)) |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Conexão Redis; alternativas Upstash descritas no [ADR 0016](0016-redis-na-hospedagem.md) |
 
 ## Consequências
 
-- **Ganho:** nenhum segredo no repositório nem no histórico, trocar um token é mudar o ambiente, e a falha é rápida e clara.
-- **Custo:** um passo a mais para rodar (`npm run setup`), mais código de validação no começo e o `.env.example` para manter em dia. Um teste falha se uma variável lida não estiver nele.
-- **Verificações:** toda variável lida existe no `.env.example` (unitário); ambiente incompleto não sobe e não mostra valores (unitário); produção com valores de exemplo não sobe (unitário); `.env` fora do git (conferido no `git status`); sem token no bundle (SEG-14).
+- **Ganho:** trocar tokens ou conectar Redis não exige embuti-los no front.
+- **Custo:** é preciso configurar o ambiente e manter os exemplos atualizados. O código atual não verifica força do token nem exige Redis em produção.
+- **Atenção:** `.gitignore` não remove arquivos já rastreados. Confira o histórico e o status antes de concluir que um arquivo ou segredo não foi versionado.
 - **Fora do escopo:** cofre de segredos (Vault, AWS Secrets Manager) e rotação automática. Num ambiente real as variáveis viriam do cofre da plataforma, sem mudar o código.
 
 No desenvolvimento, o Vite encaminha `/api` para a API. Em produção, o front e a API devem ser servidos sob a mesma origem.

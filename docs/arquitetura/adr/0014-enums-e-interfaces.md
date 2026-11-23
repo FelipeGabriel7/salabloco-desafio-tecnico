@@ -1,5 +1,7 @@
 # ADR 0014. Enums e interfaces como contrato de tipos
 
+> **Status: proposta, não implementada.** Os enums, catálogo multilíngue, interfaces de repository e relógio desta proposta não representam o código atual. O projeto usa `type`, strings e `AppError` simples; não há suporte i18n implementado.
+
 ## Decisão
 
 | Quando | Uso |

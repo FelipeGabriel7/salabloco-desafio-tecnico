@@ -1,27 +1,22 @@
 # Uso de IA
 
-Usei o Claude (Anthropic), em sessões de conversa. A IA me ajudou em três pontos. As decisões e o restante do código são meus.
+Usei Claude e Kilo Code como apoio durante o desafio. A IA não ficou restrita ao protótipo inicial: também participou de implementação, investigação de problemas, testes e documentação. A direção do escopo, as escolhas discutidas e a revisão são de minha responsabilidade.
 
-## Onde usei IA
+## Onde a IA ajudou
 
-| Parte | O que pedi |
+| Área | Tipo de apoio |
 | --- | --- |
-| Levantamento de requisitos | Organizar o enunciado em requisitos, regras de negócio e casos de borda |
-| Interface | Desenhar o protótipo, o fluxo e as telas, a partir da direção visual que eu defini |
-| Boilerplate do front-end | A base em React com API simulada: telas, formulário, mapa do dia e tratamento de conflito. É só o ponto de partida, e eu edito e evoluo o front a partir dele |
+| Requisitos e arquitetura | Organizar o enunciado, discutir alternativas e registrar decisões em ADRs |
+| Front-end | Protótipo inicial, componentes React, formulários e integração com a API |
+| Back-end | Implementação e ajustes de rotas, validação, persistência, concorrência e fuso |
+| Qualidade | Cenários e código de testes, investigação de falhas e validação local |
+| CI e documentação | Apoio na configuração do pipeline, README e revisão dos documentos |
 
-## Onde não usei
+## Como valido o resultado
 
-- **Decisões de arquitetura e segurança.** Os ADRs registram o que eu decidi. Pedi à IA só para listar alternativas, e a escolha foi minha.
-- **API.** Escrevo eu mesmo.
-- **Testes** (Vitest, Playwright, Bruno). Escrevo eu mesmo.
-- **Front-end além do boilerplate.** Evoluo eu mesmo.
+- Leio e reviso as alterações, especialmente autenticação, concorrência e conversão de horários.
+- Comparo o comportamento com o enunciado e rodo testes, typecheck e build.
+- Registro limitações conhecidas em vez de apresentar como garantias comportamentos ainda não comprovados.
+- Não versiono credenciais reais nem transcrições brutas.
 
-## Como me protejo dos riscos
-
-| Risco | O que faço |
-| --- | --- |
-| Código que eu não entendo | Leio o boilerplate de ponta a ponta e só mantenho o que consigo explicar. A estrutura está no [ADR 0010](../arquitetura/adr/0010-frontend.md) |
-| Teste que só confirma o que o código faz | Escrevo os casos de aceite a partir do enunciado, antes do código |
-| Dependência ou configuração incorreta | Rodo instalação, testes e build de verdade |
-| Dado pessoal em transcrição | Não versiono a transcrição bruta |
+Antes da entrevista, preciso conseguir explicar e alterar as partes entregues, inclusive aquelas em que recebi assistência.

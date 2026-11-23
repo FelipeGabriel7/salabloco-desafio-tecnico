@@ -2,9 +2,9 @@
 
 ## Decisão
 
-Na Vercel, a API guarda os dados num **Redis gerenciado (Upstash, pelo Marketplace da Vercel)**. Local, testes e CI continuam com o **arquivo JSON**.
+Quando as credenciais estão configuradas, a API pode guardar os dados em **Redis gerenciado**. Sem elas, usa arquivo JSON, inclusive na Vercel. A configuração efetiva de produção deve ser verificada no provedor.
 
-A escolha é automática: se `KV_REST_API_URL` e `KV_REST_API_TOKEN` existem no ambiente, a API usa o Redis; se não, usa o arquivo de `DB_PATH`. Quem cria essas variáveis é a própria integração da Vercel, então nenhum valor passa por mim nem fica no código.
+A escolha é automática: a API aceita `KV_REST_API_URL`/`KV_REST_API_TOKEN` ou `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`. Se não houver URL e token, usa o arquivo de `DB_PATH`; na Vercel, o padrão é `/tmp/salabloco.json`, temporário e isolado por instância.
 
 O repository não mudou. Ele depende de um `Storage` com quatro operações, e cada implementação resolve do seu jeito:
 
@@ -15,7 +15,7 @@ O repository não mudou. Ele depende de um `Storage` com quatro operações, e c
 | `exclusive` | fila em memória ([ADR 0007](0007-concorrencia.md)) | trava `SET salabloco:lock NX PX 5000` |
 | `snapshot` | leitura dentro da fila | `GET`, que já é atômico |
 
-A trava guarda um id aleatório e só é liberada por quem a criou (script Lua que confere o dono antes de apagar). Se a função cair no meio, a trava expira em 5 segundos.
+A trava guarda um id aleatório e só é liberada por quem a criou (script Lua que confere o dono antes de apagar). A trava expira em 5 segundos e não é renovada. Se uma operação ultrapassar esse prazo, outra instância pode obter a trava antes da primeira gravar; `save` não verifica novamente quem é o dono. Portanto, há risco de gravação obsoleta e a exclusão mútua não é garantida em todas as condições.
 
 ## Por quê
 
@@ -23,7 +23,8 @@ Na Vercel a API é uma função serverless: o `/tmp` some quando a função é r
 
 ## Consequências
 
-- **Ganho:** reservas persistem e a regra "uma sala, um horário" volta a valer entre instâncias.
+- **Ganho:** com Redis configurado, os dados são compartilhados entre instâncias e não dependem do `/tmp` de uma função.
+- **Limite:** a trava com TTL reduz corridas, mas não fornece garantia transacional forte se expirar durante a operação. É necessário reforçar a atomicidade antes de afirmar que conflitos são impossíveis.
 - **Ganho:** a troca ficou só na infraestrutura. Services, controllers, regras e front não mudaram, como o [ADR 0003](0003-persistencia.md) previa.
 - **Custo:** a cada escrita o banco inteiro é lido e regravado, como no arquivo. Neste volume não pesa.
 - **Custo:** escritas viram sequenciais entre todas as instâncias. Para um coworking é aceitável.

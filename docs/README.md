@@ -31,7 +31,7 @@ docs/
 | [0001](arquitetura/adr/0001-express.md) | Express 5 como framework do back-end |
 | [0002](arquitetura/adr/0002-estrutura-mvc-servico.md) | MVC com service e repository, monólito modular |
 | [0003](arquitetura/adr/0003-persistencia.md) | Persistência em arquivo JSON atrás de um repository |
-| [0004](arquitetura/adr/0004-validacao.md) | Validação com zod em middleware e erros por enum |
+| [0004](arquitetura/adr/0004-validacao.md) | Validação com Zod; consultar atualização sobre a implementação atual |
 | [0005](arquitetura/adr/0005-autenticacao.md) | Autenticação e autorização por token de empresa |
 | [0006](arquitetura/adr/0006-tempo-e-fuso.md) | Tempo, fuso horário e expediente (07h às 22h) |
 | [0007](arquitetura/adr/0007-concorrencia.md) | Concorrência na criação de reservas, com fila de escrita |
@@ -39,9 +39,9 @@ docs/
 | [0009](arquitetura/adr/0009-monorepo.md) | Um repositório, uma pasta por domínio |
 | [0010](arquitetura/adr/0010-frontend.md) | Front-end |
 | [0011](arquitetura/adr/0011-estrategia-de-testes.md) | Estratégia de testes |
-| [0012](arquitetura/adr/0012-limite-de-requisicoes.md) | Limite de requisições (429) |
+| [0012](arquitetura/adr/0012-limite-de-requisicoes.md) | Proposta: limite de requisições (429), não implementada |
 | [0013](arquitetura/adr/0013-configuracao-e-segredos.md) | Configuração e segredos: `.env` e `.env.example` |
-| [0014](arquitetura/adr/0014-enums-e-interfaces.md) | Enums e interfaces como contrato de tipos |
+| [0014](arquitetura/adr/0014-enums-e-interfaces.md) | Proposta: enums e interfaces, não implementada integralmente |
 | [0015](arquitetura/adr/0015-deploy-na-vercel.md) | Deploy na Vercel, pelo pipeline |
 | [0016](arquitetura/adr/0016-redis-na-hospedagem.md) | Redis na hospedagem, arquivo no ambiente local |
 

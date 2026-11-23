@@ -6,7 +6,7 @@ Trato o tempo com rigor, porque quase todo bug de reserva é bug de tempo.
 
 1. **ISO 8601 com fuso explícito.** Formato ambíguo (data sem hora, hora sem fuso) é rejeitado com 400. Não corrijo nada em silêncio: `2026-02-30` é erro, não 02 de março.
 2. **Fuso `America/Sao_Paulo`, convertido com `Intl`**, sem offset fixo `-03:00`. É configurável por `COWORKING_TIMEZONE`.
-3. **Relógio injetado** (`now: () => Date`) nos services, para os testes controlarem a hora.
+3. **Relógio do sistema:** o service consulta `Date.now()`. Os testes controlam o relógio com recursos do Vitest; não há relógio injetado no service.
 4. **Expediente das 07:00 às 22:00** como regra de negócio (`OUTSIDE_OPENING_HOURS`, 422). Por isso nenhuma reserva cruza a meia-noite.
 5. **Intervalo semiaberto** `[início, fim)`: reservas coladas (10:00–11:00 e 11:00–12:00) não conflitam.
 
@@ -31,6 +31,7 @@ O `Date` do JavaScript corrige datas impossíveis e lê strings sem fuso no fuso
 
 ## Consequências
 
-- **Ganho:** o cálculo fica correto em qualquer época e em outras regiões, por configuração, e a entrada ambígua é barrada na borda.
+- **Ganho:** a API exige fuso explícito nas entradas e usa o timezone configurado para interpretar o dia.
+- **Limite:** transições de horário de verão, com horários locais ambíguos ou inexistentes, precisam de testes e política explícita; não há garantia demonstrada para qualquer época ou região.
 - **Custo:** calcular o início do dia é mais elaborado que somar `-3h`, e o front precisa enviar fuso explícito.
 - **Front-end:** lê `COWORKING_TIMEZONE` pelo endpoint autenticado `/api/config` e converte para ISO na função `apps/web/src/services/time.ts`.

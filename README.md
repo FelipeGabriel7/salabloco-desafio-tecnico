@@ -1,10 +1,34 @@
 # Salabloco
 
-Aplicação de **reserva de salas de reunião de um coworking**. Várias empresas dividem o espaço: cada uma reserva salas, vê as próprias reservas e cancela quando precisa. **Uma empresa nunca vê nem altera as reservas de outra.**
+Aplicação de **reserva de salas de reunião de um coworking**. Várias empresas dividem o espaço: cada uma reserva salas, vê as próprias reservas e cancela quando precisa. O servidor restringe o acesso às reservas da empresa identificada pelo token.
 
 Este é o meu desafio técnico para desenvolvedor júnior: API em Node.js + TypeScript, front-end em React + TypeScript, testes automatizados e documentação das minhas decisões.
 
-> **Estado atual:** a API Express e o front React estão ligados e cobertos por testes de unidade, API, contrato, interface, acessibilidade e performance, todos rodando no CI.
+> **Estado atual:** a API Express e o front React estão integrados. O projeto possui testes de unidade, API, contrato, interface, acessibilidade e carga. O Redis está configurado na hospedagem; a seção de deploy descreve as condições e limitações dessa persistência.
+
+**[Abrir aplicação](https://salabloco-web.vercel.app/)** · **[Ver relatório Allure](https://felipegabriel7.github.io/salabloco-desafio-tecnico/)** · **[Consultar API](docs/api/api.md)** · **[Decisões de arquitetura](docs/README.md)**
+
+## Acesso publicado
+
+- Front-end: https://salabloco-web.vercel.app/
+- Health da API: https://salabloco-api.vercel.app/api/health
+- Relatório Allure: https://felipegabriel7.github.io/salabloco-desafio-tecnico/
+
+Para entrar, escolha uma empresa e informe o token correspondente. Os tokens locais de exemplo estão em `apps/api/.env.example`; as credenciais de produção são configuradas no ambiente da API e não devem ser publicadas no repositório. Se o repositório for entregue a terceiros, compartilhe eventuais credenciais de avaliação por um canal adequado e use dados fictícios.
+
+## A aplicação
+
+A pessoa seleciona sua empresa, informa o token e acessa apenas as reservas autorizadas. O mapa mostra períodos livres e ocupados sem revelar título, e-mail ou empresa de outras reservas.
+
+| Acesso | Reservas da empresa |
+| --- | --- |
+| ![Tela de login com seletor de empresa e campo de token](docs/design/aplicacao-login.png) | ![Lista de reservas com opções de edição e cancelamento](docs/design/aplicacao-reservas.png) |
+
+**Mapa do dia:** visualização por sala, com expediente, períodos livres e intervalos ocupados.
+
+![Mapa do dia com períodos livres e ocupados](docs/design/aplicacao-mapa.png)
+
+As imagens de reservas e mapa foram geradas em ambiente local isolado, com dados fictícios; a tela de login foi capturada da aplicação publicada.
 
 - Aplicação publicada em produção: https://salabloco-web.vercel.app/
 - API Publicada em produção: https://salabloco-api.vercel.app/api/health
@@ -23,21 +47,24 @@ EMPRESA_BRISA = 1e7f04ef20df85773c43b98d811842942b87884b5635280fa07389b05523b7a0
 
 ## Como rodar
 
-Requisito: **Node 22 ou mais novo**.
+Requisitos: **Node 22.18 ou mais novo**, npm e dependências do Playwright para os testes de navegador. A geração local do Allure também requer Java.
 
 ```bash
 npm ci
 npm run setup       # cria os .env a partir dos .env.example (não sobrescreve)
+npx playwright install chromium
 npm run dev         # API em :3333 e front em :5181
-npm run validate    # roda todas as validações e gera o relatório Allure
 ```
 
-No login, escolha a empresa e informe o token configurado em `apps/api/.env`. O front usa Axios e encaminha `/api` pelo proxy do Vite. O `.env` nunca vai para o git e nenhum token fica no código ([ADR 0013](docs/arquitetura/adr/0013-configuracao-e-segredos.md)).
+Em outro terminal, `npm run validate` executa a suíte local e gera o relatório Allure. Esse comando limpa os resultados anteriores em `tests/allure-results` e inicia uma API de teste na porta 3390; guarde os resultados que precisar antes de executá-lo.
+
+No login, escolha a empresa e informe o token configurado em `apps/api/.env`. O front usa Axios e encaminha `/api` pelo proxy do Vite. Os arquivos `.env` são ignorados pelo Git; os exemplos locais e scripts de teste contêm apenas valores fictícios ([ADR 0013](docs/arquitetura/adr/0013-configuracao-e-segredos.md)).
 
 ## O que o sistema faz
 
 - **Reservar** uma sala por um intervalo, com título e e-mail do responsável.
 - **Ver as reservas da própria empresa** e cancelá-las.
+- **Editar** uma reserva da própria empresa.
 - **Ver a disponibilidade** de uma sala em um dia, ou o mapa do dia com todas as salas.
 - **Receber sugestões** de outros horários ou salas livres quando há conflito.
 
@@ -45,19 +72,19 @@ No login, escolha a empresa e informe o token configurado em `apps/api/.env`. O 
 
 | Regra | Detalhe |
 | --- | --- |
-| Sem sobreposição | Uma sala não tem duas reservas no mesmo horário, de nenhuma empresa. Reservas coladas (10:00–11:00 e 11:00–12:00) são válidas |
+| Sem sobreposição | Reservas na mesma sala são verificadas na criação e edição, independentemente da empresa. Reservas coladas são válidas |
 | Duração | De 30 minutos a 4 horas |
 | Expediente | O coworking funciona das 07:00 às 22:00 |
 | Passado | Não é possível reservar no passado |
 | Isolamento | Cada empresa só vê e altera as próprias reservas |
-| Privacidade | A disponibilidade mostra só início e fim, sem dados de quem reservou |
-| Fuso | Todo horário segue o fuso do coworking (`America/Sao_Paulo`) |
+| Privacidade | A disponibilidade mostra intervalos livres e ocupados, sem dados de quem reservou |
+| Fuso | A interface usa o fuso configurado no back-end; o padrão é `America/Sao_Paulo` |
 
 A lista completa, com os casos de borda, está em [requisitos](docs/produto/requisitos.md).
 
 ### Dados de demonstração
 
-O back-end insere no arquivo JSON as empresas **Acme**, **Lumen** e **Brisa** e cinco salas fictícias de Belo Horizonte: Savassi (6 lugares), Pampulha (12), Serra do Curral (4), Auditório Liberdade (20) e UFMG (8).
+O seed insere as empresas **Acme**, **Lumen** e **Brisa** e cinco salas fictícias de Belo Horizonte. O armazenamento selecionado é arquivo JSON local ou Redis quando configurado.
 
 ## API
 
@@ -69,7 +96,7 @@ O back-end insere no arquivo JSON as empresas **Acme**, **Lumen** e **Brisa** e 
 | `GET /api/companies` | Lista empresas para o seletor de login (público) |
 | `GET /api/config` | Informa o fuso configurado (com token) |
 | `GET /api/rooms` | Lista as salas |
-| `GET /api/rooms/:id/availability?date=AAAA-MM-DD` | Horários ocupados da sala no dia |
+| `GET /api/rooms/:id/availability?date=AAAA-MM-DD` | Intervalos livres e ocupados da sala no dia |
 | `GET /api/companies/:companyId/bookings` | Reservas da empresa |
 | `POST /api/companies/:companyId/bookings` | Cria uma reserva |
 | `PUT /api/companies/:companyId/bookings/:id` | Edita uma reserva própria |
@@ -90,27 +117,58 @@ docs/         produto, arquitetura (ADRs), API, qualidade, design
 
 Um repositório só, com npm workspaces ([ADR 0009](docs/arquitetura/adr/0009-monorepo.md)).
 
+## Arquitetura
+
+O back-end é um monólito Express. No fluxo de reservas, o controller traduz HTTP, o service aplica as regras e o repository consulta e grava os dados. Em salas, as rotas chamam funções do service/repository diretamente.
+
+```mermaid
+flowchart LR
+    Pessoa["Pessoa usuária"] --> Web["React + TypeScript"]
+    Web -->|"Axios /api"| API["API Express"]
+    API --> Auth["Autenticação e autorização"]
+    Auth --> Controller["Controller de reservas"]
+    Controller --> Service["Service: regras de negócio"]
+    Service --> Repository["Repository"]
+    Repository --> Storage["Storage"]
+    Storage --> Local["JSON local"]
+    Storage --> Redis["Redis na hospedagem, quando configurado"]
+```
+
+O fluxo de criação valida formato, empresa, duração, horário e conflito antes da gravação. A API usa o token para identificar a empresa; o `companyId` enviado na URL é conferido contra essa identidade.
+
 ## Minhas decisões
 
 Cada decisão tem um ADR com o motivo, as consequências e as alternativas que descartei. Os principais:
 
 | Decisão | Por quê | ADR |
 | --- | --- | --- |
-| Express 5 | Domino o framework e o erro de handler `async` já é tratado | [0001](docs/arquitetura/adr/0001-express.md) |
-| MVC com service e repository | A regra de negócio fica no service, nunca no controller | [0002](docs/arquitetura/adr/0002-estrutura-mvc-servico.md) |
-| Arquivo JSON atrás de uma interface | Os dados sobrevivem ao reinício e o banco fica trocável | [0003](docs/arquitetura/adr/0003-persistencia.md) |
+| Express 5 | Framework HTTP e tratamento de erros em handlers assíncronos | [0001](docs/arquitetura/adr/0001-express.md) |
+| Rotas, controller, service e repository | Separar HTTP, regras e persistência no módulo de reservas | [0002](docs/arquitetura/adr/0002-estrutura-mvc-servico.md) |
+| JSON local com abstração de armazenamento | Persistir entre reinícios locais e permitir a escolha de Redis por configuração | [0003](docs/arquitetura/adr/0003-persistencia.md) |
 | A empresa vem do token | O isolamento é decidido no servidor | [0005](docs/arquitetura/adr/0005-autenticacao.md) |
 | 404, e não 403, para reserva alheia | Não confirma que o id existe | [0005](docs/arquitetura/adr/0005-autenticacao.md) |
-| ISO 8601 com fuso, via `Intl` | Correto em qualquer época, e entrada ambígua é rejeitada | [0006](docs/arquitetura/adr/0006-tempo-e-fuso.md) |
-| Escrita em fila, com a checagem de conflito dentro | Duas empresas nunca reservam a mesma sala | [0007](docs/arquitetura/adr/0007-concorrencia.md) |
-| Redis na Vercel, arquivo no local | O disco da função serverless é temporário; o repository não muda | [0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md) |
-| Nenhum segredo no código | `.env` fora do git e `.env.example` versionado | [0013](docs/arquitetura/adr/0013-configuracao-e-segredos.md) |
+| ISO 8601 com fuso, via `Intl` | Evitar entradas sem fuso e interpretar o dia no fuso configurado | [0006](docs/arquitetura/adr/0006-tempo-e-fuso.md) |
+| Verificação e escrita serializadas | Evitar corridas no armazenamento local; a trava Redis tem limitações descritas abaixo | [0007](docs/arquitetura/adr/0007-concorrencia.md) |
+| Redis opcional na Vercel | Compartilhar dados entre instâncias quando configurado | [0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md) |
+| Segredos no ambiente | `.env` fora do git; `.env.example` contém valores locais de exemplo | [0013](docs/arquitetura/adr/0013-configuracao-e-segredos.md) |
 
 A lista completa dos 16 ADRs está em [docs/](docs/README.md).
 
 ## Testes
 
 Sigo a pirâmide de testes: muitos testes rápidos na base e poucos no navegador ([ADR 0011](docs/arquitetura/adr/0011-estrategia-de-testes.md)).
+
+```mermaid
+flowchart BT
+    Unit["Base · Vitest\nFunções de tempo, validação e componentes"]
+    APItest["Integração e contrato · Supertest + Bruno\nRotas, regras, isolamento e concorrência"]
+    E2E["Topo · Playwright\nFluxos da pessoa usuária e acessibilidade"]
+    Unit --> APItest --> E2E
+    Carga["Transversal · Artillery: carga"] -.-> APItest
+    CI["CI: executa e reúne os resultados"] -.-> Unit
+    CI -.-> APItest
+    CI -.-> E2E
+```
 
 | Camada | Ferramenta | Onde | Comando |
 | --- | --- | --- | --- |
@@ -120,9 +178,15 @@ Sigo a pirâmide de testes: muitos testes rápidos na base e poucos no navegador
 | Interface | Playwright (BDD, Page Objects, axe) | `tests/e2e`, `tests/pages` | `npm run test:e2e` |
 | Performance | Artillery | `tests/performance` | `npm run test:performance` |
 
-- `npm run validate` sobe uma API própria com banco temporário, roda todas as camadas, mostra uma tabela de passou/falhou e gera o relatório.
-- `npm run report:open` abre o **Allure** com os testes da API e da interface. Cada teste de interface tem screenshot; vídeo e trace só quando falha. O Bruno gera o próprio relatório em `tests/reports/bruno.html` e o Artillery em `tests/reports/artillery.json`.
+- `npm run validate` sobe uma API própria com arquivo JSON temporário, roda as etapas listadas e tenta gerar o relatório. A suíte Redis separada exige Docker/Compose (`npm run test:api:redis`).
+- `npm run report:open` abre o **Allure** com os testes da API e da interface. O Bruno gera `tests/reports/bruno.html` e o Artillery gera `tests/reports/artillery.json`.
 - Contrato e performance precisam da API rodando (`npm run dev:api`); o `validate` já cuida disso.
+
+### Evidência no Allure
+
+O relatório reúne resultados da API e da interface, com detalhes e anexos das execuções. A imagem é uma captura de uma execução publicada; o [relatório ao vivo](https://felipegabriel7.github.io/salabloco-desafio-tecnico/) pode mostrar resultados diferentes conforme o commit e o pipeline.
+
+![Relatório Allure com resultados da API e da interface](docs/design/relatorio-allure.png)
 
 ## CI/CD
 
@@ -131,13 +195,15 @@ O pipeline fica em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) e roda
 | Etapa | O que garante |
 | --- | --- |
 | Tipos, unitários e API | `typecheck`, Vitest do front e da API, build |
-| Segurança (DevSecOps) | gitleaks (segredos), `npm audit` (dependências), nenhum token no bundle |
+| Segurança | Gitleaks e `npm audit` das dependências de produção |
 | Análise estática | CodeQL |
 | Contrato | Coleção Bruno contra a API rodando |
 | Interface | Playwright no Chromium |
 | Performance | Artillery com limites de p95 e p99 |
 | Relatório | Allure consolidado, publicado no GitHub Pages em https://felipegabriel7.github.io/salabloco-desafio-tecnico/, e resumo de cada etapa na página da execução |
-| Deploy | Só na `main`, só com tudo verde: publica API e front na Vercel |
+| Deploy | Configurado para a `main` após as verificações exigidas; depende dos segredos da Vercel |
+
+O pipeline executa typecheck, build e testes; **não há comando de lint configurado**. A publicação e o resultado de uma execução específica devem ser conferidos na aba Actions.
 
 ## Deploy na Vercel
 
@@ -145,25 +211,27 @@ O pipeline fica em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) e roda
 
 São dois projetos na Vercel, um para a API e outro para o front, publicados pelo pipeline depois que todas as etapas passam.
 
-1. Crie o projeto **salabloco-api** com *Root Directory* `apps/api`. Em *Environment Variables*, defina `COMPANY_ACME_TOKEN`, `COMPANY_LUMEN_TOKEN`, `COMPANY_BRISA_TOKEN` (valores novos e longos), `COWORKING_TIMEZONE=America/Sao_Paulo`. Em *Storage*, crie um **Upstash Redis** e ligue ao projeto: a integração cria `KV_REST_API_URL` e `KV_REST_API_TOKEN`, e a API passa a usar o Redis sozinha.
+1. Crie o projeto **salabloco-api** com *Root Directory* `apps/api`. Configure os três `COMPANY_*_TOKEN` e `COWORKING_TIMEZONE` como variáveis de ambiente. Conecte um Upstash Redis e configure `KV_REST_API_URL` e `KV_REST_API_TOKEN`, ou `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN`, conforme os nomes fornecidos pela integração.
 2. Crie o projeto **salabloco-web** com *Root Directory* `apps/web`. Se a URL da API não for `https://salabloco-api.vercel.app`, ajuste o `rewrites` em [`apps/web/vercel.json`](apps/web/vercel.json). O front chama `/api` no próprio domínio e a Vercel encaminha para a API, sem CORS.
 3. Em *Settings → Tokens* da Vercel, gere um token. No GitHub, em *Settings → Secrets and variables → Actions*, crie `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_API` e `VERCEL_PROJECT_ID_WEB` (os IDs ficam em *Settings → General* de cada projeto).
 4. Faça push na `main`. O deploy automático pelo Git da Vercel fica desligado (`git.deploymentEnabled: false`): quem publica é o pipeline, e só depois dos testes.
 
-**Persistência na hospedagem:** na Vercel a API roda como função serverless, e o disco (`/tmp`) é temporário e separado por instância. Por isso, lá os dados ficam no Redis, e a trava de escrita também, o que mantém a regra de não sobrepor reservas entre instâncias. Local, testes e CI seguem com o arquivo JSON ([ADR 0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md)).
+**Persistência na hospedagem:** a integração Redis está configurada no ambiente publicado, conforme a validação de funcionamento. Com URL e token do Redis configurados, a API usa Redis; caso contrário, usa arquivo. Na Vercel, o fallback em `/tmp` é temporário e isolado por instância, portanto **reservas podem desaparecer ou divergir**. Confirme as variáveis no projeto após mudanças de ambiente. A trava Redis expira após 5 segundos e não é renovada; uma operação que exceda esse prazo pode perder a exclusividade. Não há garantia transacional forte entre instâncias ([ADR 0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md)).
 
 ## O que ainda falta
 
 - No login, token de outra empresa (403) mostra "Confira se a API está ativa" em vez de "token inválido".
 - Limite de requisições (429) e comparação de token com `timingSafeEqual`.
-- Revisar a agenda de seleção de horário.
+- Fortalecer a concorrência entre instâncias com operação atômica no banco ou mecanismo com renovação/fencing da trava.
+- Validar a persistência Redis efetiva no ambiente publicado e os casos de transição de fuso/horário de verão.
+- Adicionar lint ao CI.
 
 Os itens com teste já escrito aparecem no relatório como pendentes ou como falha esperada.
 
 ## O que ficou de fora
 
-Cadastro de empresas e salas por tela, reservas recorrentes e login com senha. Limites que já conheço: os tokens são fixos, sem rotação nem revogação; a persistência em arquivo vale para um único processo; não há trilha de auditoria. O HTTPS é obrigatório em qualquer ambiente publicado e fica a cargo de quem publica.
+Cadastro de empresas e salas por tela, reservas recorrentes, login com senha e i18n. O extra de Firestore com Emulator não foi implementado. Os tokens são fixos, sem rotação nem revogação; o JSON local atende um único processo e não há trilha de auditoria.
 
 ## Uso de IA
 
-Usei IA (Claude) no levantamento de requisitos, no desenho da interface e só no boilerplate inicial do front-end mockado. O restante do front, a API, os testes e as decisões dos ADRs são meus. Detalhes em [uso de IA](docs/ai/uso-de-ia.md).
+Usei Claude e Kilo Code como apoio no levantamento de requisitos, nas discussões de arquitetura, na implementação e revisão do front-end, back-end, testes, CI e documentação. As decisões de escopo e os ajustes foram direcionados por mim; o código e os resultados precisam ser compreendidos e validados antes da entrega. Detalhes em [uso de IA](docs/ai/uso-de-ia.md).

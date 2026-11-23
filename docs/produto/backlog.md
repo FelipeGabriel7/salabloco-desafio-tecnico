@@ -86,7 +86,7 @@ chore: organiza o monorepo em apps e tests
 feat(api): cria AppError, ErrorCode e error handler
 test(api): cobre os limites de duração da reserva
 fix(api): inclui a checagem de conflito dentro da fila
-docs: registra que nenhuma rota é pública
+docs: registra quais rotas são públicas e quais exigem autenticação
 ```
 
 ## Definição de pronto

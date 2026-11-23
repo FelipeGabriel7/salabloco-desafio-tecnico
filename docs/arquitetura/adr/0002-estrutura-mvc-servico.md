@@ -1,5 +1,7 @@
 # ADR 0002. MVC com service e repository, em monólito modular
 
+> **Estado atual:** reservas seguem route → controller → service → repository; as rotas de salas chamam service/repository diretamente. Não há módulos `auth` ou controllers/services/repositories separados para `rooms` como na árvore proposta abaixo.
+
 ## Decisão
 
 Organizo o back-end como **monólito modular**: uma aplicação só, dividida por domínio (`bookings`, `rooms`, `auth`), com camadas **MVC + service + repository** dentro de cada módulo.

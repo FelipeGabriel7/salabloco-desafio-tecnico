@@ -1,5 +1,7 @@
 # ADR 0007. Concorrência na criação de reservas
 
+> **Atualização:** o fluxo atual usa a abstração `Storage`: fila local para arquivo e trava com TTL para Redis. Veja [ADR 0016](0016-redis-na-hospedagem.md) para a limitação da trava distribuída.
+
 ## Decisão
 
 Quero evitar duas coisas: a corrida entre checar e gravar (duas requisições leem o mesmo estado antigo e as duas reservam) e a corrupção do arquivo por escritas simultâneas.
@@ -17,8 +19,8 @@ await queue.run(async () => {
 
 Se a fila serializasse só o ato de gravar, com a checagem fora dela, a corrida continuaria.
 
-- **Estado em memória:** lido uma vez ao subir. As consultas não passam pela fila.
-- **Escrita atômica:** gravo em arquivo temporário e renomeio, então uma queda no meio não corrompe.
+- **Leitura:** o arquivo é lido conforme as operações; o `snapshot` local passa pela fila. No Redis, o snapshot usa `GET`.
+- **Escrita em arquivo:** gravo em arquivo temporário e renomeio para reduzir o risco de arquivo parcialmente escrito; isso não cobre todas as falhas de máquina ou sistema de arquivos.
 - **Resposta:** só depois de gravar. Um 201 significa "persistido".
 
 ## Consequências

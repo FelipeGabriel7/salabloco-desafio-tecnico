@@ -48,12 +48,12 @@ apps/api/src/
 | Camada | Faz | Não faz |
 | --- | --- | --- |
 | Routes | Liga método e URL aos middlewares e ao controller | Lógica |
-| Middlewares | Limite de requisições, autenticação, validação, erros | Regra de negócio |
+| Middlewares | Autenticação, autorização e tratamento de erros | Regra de negócio |
 | Controller | Chama **um** método do service e devolve a resposta | Regra e acesso a dados |
 | Service | **Regra de negócio.** Lança `AppError` | Conhecer `req`, `res` ou Express |
-| Repository | **Acesso a dados** (interface) | Decidir regra |
+| Repository | Acesso a dados e checagem de conflito na operação de escrita | Conhecer HTTP |
 
-O controller conhece o service, o service conhece a **interface** do repository, e só `infrastructure/` sabe que existe um arquivo JSON. `app.ts` não chama `listen`: assim os testes importam o app sem abrir porta.
+O controller de reservas chama o service, que importa funções concretas do repository. O repository usa `Storage` para arquivo ou Redis. As rotas de salas chamam funções diretamente; `app.ts` não chama `listen`, permitindo importar o app nos testes.
 
 ## Front-end
 
@@ -80,8 +80,8 @@ sequenceDiagram
   participant S as BookingsService
   participant P as Repository
   C->>M: POST /api/companies/acme/bookings
-  M->>M: limite (429), autenticação (401), :companyId (403), validação (400)
-  M->>S: create(empresa do token, dados)
+  M->>M: autenticação (401), :companyId (403)
+  M->>S: controller valida body (400) e chama create
   S->>S: regras (422)
   S->>P: fila: checa conflito (409) e grava
   S-->>C: 201
@@ -91,7 +91,7 @@ Erros viram `{ code, message, field? }` no error handler. Erro inesperado vira 5
 
 ## Dados
 
-- Um único arquivo, `db.json` (fora do git), guarda **empresas, salas e reservas**. O back-end o cria e o semeia com empresas e salas na subida (`seed.ts`, versionado, idempotente, nunca mexe em reservas) ([ADR 0003](adr/0003-persistencia.md)).
+- Arquivo local ou Redis guardam **empresas, salas e reservas**; o seed adiciona empresas e salas ausentes na subida. O `DB_PATH` ativo deve ficar fora do git, mas existe um arquivo `db.json` histórico já rastreado ([ADR 0003](adr/0003-persistencia.md)).
 - Os **tokens** das empresas vêm do ambiente e nunca são gravados no arquivo.
 - Empresa: `id`, `name`. Sala: `id`, `name`, `capacity`.
 - Reserva: `id`, `companyId`, `roomId`, `startsAt`, `endsAt`, `title`, `responsibleEmail`, `createdAt`. Datas em ISO 8601 com fuso explícito.
@@ -100,12 +100,12 @@ Erros viram `{ code, message, field? }` no error handler. Erro inesperado vira 5
 
 | Preocupação | Mecanismo | ADR |
 | --- | --- | --- |
-| Regra de negócio | Services com relógio injetado | [0002](adr/0002-estrutura-mvc-servico.md) |
+| Regra de negócio | Services; relógio do sistema via `Date.now()` | [0002](adr/0002-estrutura-mvc-servico.md) |
 | Isolamento entre empresas | Empresa vem do token; filtro por empresa; 404 no recurso alheio | [0005](adr/0005-autenticacao.md) |
-| Sem corrida na criação | Fila de escrita com checagem e gravação juntas | [0007](adr/0007-concorrencia.md) |
-| Arquivo íntegro | Escrita atômica | [0003](adr/0003-persistencia.md) |
-| Força bruta | Limite de requisições com bloqueio escalonado | [0012](adr/0012-limite-de-requisicoes.md) |
-| Tempo correto | `Intl`, ISO com fuso | [0006](adr/0006-tempo-e-fuso.md) |
+| Concorrência | Fila local ou trava Redis; TTL da trava tem limitação | [0007](adr/0007-concorrencia.md) |
+| Escrita em arquivo | Temporário e rename reduzem risco de arquivo parcial | [0003](adr/0003-persistencia.md) |
+| Força bruta | Rate limit ainda não implementado | [0012](adr/0012-limite-de-requisicoes.md) |
+| Tempo | `Intl` e ISO com fuso; transições de horário de verão precisam de validação | [0006](adr/0006-tempo-e-fuso.md) |
 | Segredos | `.env` fora do git, validado no boot | [0013](adr/0013-configuracao-e-segredos.md) |
 
 ## Evolução
@@ -113,6 +113,6 @@ Erros viram `{ code, message, field? }` no error handler. Erro inesperado vira 5
 | Se... | Eu faria |
 | --- | --- |
 | A complexidade crescer | Casos de uso no lugar de services grandes |
-| Persistência virar requisito sério | Outro repository (SQL ou Firestore). Services não mudam |
+| Persistência transacional virar requisito | Avaliar banco transacional e ajustar persistência/integração conforme necessário |
 | Houver mais de uma instância | Limite e fila em armazenamento compartilhado |
 | Muitas rotas e contratos | Fastify ou Nest |

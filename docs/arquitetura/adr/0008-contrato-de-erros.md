@@ -1,5 +1,7 @@
 # ADR 0008. Contrato de erros e códigos HTTP
 
+> **Atualização:** a API usa strings em `AppError`, não um enum. A resposta `429` abaixo é uma proposta, pois rate limit não está implementado. O contrato atual está em [API](../../api/api.md).
+
 ## Decisão
 
 Toda resposta de erro tem o mesmo corpo, baseado num enum de códigos ([ADR 0004](0004-validacao.md), [ADR 0014](0014-enums-e-interfaces.md)):
@@ -35,7 +37,7 @@ Quero que o erro ajude a resolver o problema, então o servidor devolve alternat
 ```
 
 - O `BookingsService` calcula até dois horários livres próximos na mesma sala, com a mesma duração, e outras salas livres no horário pedido. Nunca no passado e nunca fora do expediente.
-- Calculo no servidor porque ele é a fonte única da verdade, é testável com relógio injetado e simplifica o front.
+- Calculo no servidor para manter a regra de sugestão no mesmo lugar. O relógio atual é `Date.now()`; testes podem controlá-lo com Vitest.
 - As sugestões só trazem horários livres, que já são visíveis a quem tem token. Não vazam dado de terceiros.
 
 ### 500

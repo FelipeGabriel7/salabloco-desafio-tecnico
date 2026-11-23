@@ -1,5 +1,7 @@
 # Segurança
 
+> **Estado atual:** esta matriz inclui ameaças e controles planejados. Rate limit, bloqueio escalonado, helmet/CSP, logger com redação e rejeição de tokens fracos em produção não foram encontrados na implementação atual. Os cenários correspondentes são pendências, não garantias já implementadas.
+
 Cada ameaça tem um controle e um teste que o prova. O ponto central é o **isolamento entre empresas**.
 
 ## O que se protege
@@ -36,7 +38,7 @@ Tudo que vem do navegador é **não confiável**: corpo, query, parâmetros e he
 | A-16 | Dependência vulnerável | `npm audit`, `npm ci` com lockfile, poucas dependências | `npm audit` |
 | A-17 | Segredo no repositório | Tudo vem do ambiente. `.env` fora do git ([ADR 0013](../arquitetura/adr/0013-configuracao-e-segredos.md)) | SEG-17 |
 | A-19 | Corrida na criação | Fila de escrita com a checagem dentro ([ADR 0007](../arquitetura/adr/0007-concorrencia.md)) | CA-22 |
-| A-20 | Dados pessoais lidos do disco | `db.json` fora do git. Tokens nunca gravados | SEG-16 |
+| A-20 | Dados pessoais lidos do disco | O `DB_PATH` ativo deve ficar fora do git; há um `db.json` histórico rastreado. Tokens não são gravados pelo repository | SEG-16 |
 | A-21 | Token em trânsito | HTTPS em qualquer ambiente publicado | doc |
 | A-22 | Data ambígua no fuso errado | ISO com fuso explícito, ambíguo recusado | TZ-05 |
 
@@ -62,7 +64,7 @@ Tudo que vem do navegador é **não confiável**: corpo, query, parâmetros e he
 3. Respondo 404, e não 403, para recurso alheio.
 4. Não crio endpoint de teste (`/reset`, `/seed`) em nenhum ambiente. O seed é um script, não uma rota.
 5. Cada resposta devolve o mínimo de dados.
-6. Mantenho segredos fora do código. Em produção o servidor não sobe com os valores de exemplo.
+6. Credenciais reais devem ficar fora do código. A API atual exige tokens presentes, mas não bloqueia automaticamente valores de exemplo em produção.
 
 ## Casos de teste
 
@@ -87,8 +89,8 @@ Tudo que vem do navegador é **não confiável**: corpo, query, parâmetros e he
 | SEG-12 | Cabeçalhos da resposta | `X-Content-Type-Options` e `X-Frame-Options` presentes |
 | SEG-13 | O front não grava o token em `localStorage` | E2E inspeciona o armazenamento |
 | SEG-14 | Bundle de produção | Sem tokens de demonstração (`grep` no `dist`) |
-| SEG-16 | `db.json` | Fora do git, sem token dentro |
-| SEG-17 | Configuração | Nenhum `.env` versionado. Ambiente incompleto: não sobe. Produção com valores de exemplo: não sobe |
+| SEG-16 | `db.json` | O arquivo ativo deve estar fora do git e sem tokens; conferir o arquivo histórico rastreado |
+| SEG-17 | Configuração | Tokens ausentes impedem boot. Bloqueio de valores de exemplo em produção é pendência |
 
 ## Fora do escopo
 

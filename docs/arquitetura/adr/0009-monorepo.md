@@ -21,7 +21,7 @@ O `package.json` da raiz declara `"workspaces": ["apps/*", "tests"]`, e um `npm 
 | --- | --- |
 | `npm run dev` | Sobe api e web juntos |
 | `npm test` | Testes unitários (Vitest) |
-| `npm run test:api` | Specs Supertest no projeto API do runner Playwright |
+| `npm run test:api` | Testes Vitest/Supertest no workspace da API |
 | `npm run test:e2e` | Testes de interface (Playwright) |
 | `npm run typecheck` e `npm run build` | Em todos os pacotes |
 
