@@ -1,47 +1,81 @@
-import type { Booking, BusySlot, Room } from "@/utils/types";
-import { ApiError, type Backend } from "./types";
+import axios from "axios";
+import type { Booking, BookingSuggestion, BusySlot, Company, NewBookingInput, Room, Session } from "./types";
+import { ApiError } from "./types";
 
-/**
- * Back-end real. Ative com VITE_API_MODE=http (e VITE_API_URL, padrão http://localhost:3333).
- * Espera o corpo de erro { code, message, field?, conflict? } descrito na seção Arquitetura.
- */
-const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3333";
+const API_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL ?? "");
 
-async function request<T>(method: string, path: string, token: string, body?: unknown): Promise<T> {
-  let res: Response;
+type ApiErrorResponse = {
+  code?: string;
+  message?: string;
+  field?: string;
+  conflict?: BusySlot;
+  suggestions?: BookingSuggestion[];
+};
+
+async function request<T>(method: string, path: string, token?: string, data?: unknown) {
   try {
-    res = await fetch(`${BASE}${path}`, {
+    const response = await axios.request<T>({
       method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(body ? { "Content-Type": "application/json" } : {}),
-      },
-      body: body ? JSON.stringify(body) : undefined,
+      url: `${API_URL}${path}`,
+      data,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
-  } catch {
-    throw new ApiError(0, "NETWORK", "Não foi possível falar com o servidor.");
+
+    return response.data;
+
+  } catch (error) {
+
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+      const response = error.response;
+      const body = response?.data;
+
+      throw new ApiError(
+        response?.status ?? 0,
+        body?.code ?? "NETWORK",
+        body?.message ?? "Não foi possível falar com o servidor.",
+        body?.field,
+        body?.conflict,
+        body?.suggestions,
+      );
+    }
+
+    throw error;
   }
-  if (res.status === 204) return undefined as T;
-  const data = (await res.json().catch(() => null)) as
-    | { code?: string; message?: string; field?: string; conflict?: BusySlot }
-    | null;
-  if (!res.ok) {
-    throw new ApiError(res.status, data?.code ?? "UNKNOWN", data?.message ?? "Erro inesperado.", data?.field, data?.conflict);
-  }
-  return data as T;
 }
 
-export const httpBackend: Backend = {
-  async login(companyId, token) {
-    // O login valida chamando uma rota protegida da própria empresa.
-    await request<Booking[]>("GET", `/companies/${companyId}/bookings`, token);
-  },
-  listRooms: (token) => request<Room[]>("GET", "/rooms", token),
-  async availability(token, roomId, date) {
-    const res = await request<{ busy: BusySlot[] }>("GET", `/rooms/${roomId}/availability?date=${date}`, token);
-    return res.busy;
-  },
-  listBookings: (token, companyId) => request<Booking[]>("GET", `/companies/${companyId}/bookings`, token),
-  createBooking: (token, companyId, input) => request<Booking>("POST", `/companies/${companyId}/bookings`, token, input),
-  deleteBooking: (token, companyId, id) => request<void>("DELETE", `/companies/${companyId}/bookings/${id}`, token),
-};
+export async function checkLogin(companyId: string, token: string) {
+  await request<Booking[]>("GET", `/api/companies/${companyId}/bookings`, token);
+}
+
+export function getCompanies() {
+  return request<Company[]>("GET", "/api/companies");
+}
+
+export function getConfig(token: string) {
+  return request<{ timezone: string }>("GET", "/api/config", token);
+}
+
+export function getRooms() {
+  return request<Room[]>("GET", "/api/rooms");
+}
+
+export async function getAvailability(token: string, roomId: string, date: string) {
+  const response = await request<{ busy: BusySlot[] }>("GET", `/api/rooms/${roomId}/availability?date=${date}`, token);
+  return response.busy;
+}
+
+export function getBookings(session: Session) {
+  return request<Booking[]>("GET", `/api/companies/${session.companyId}/bookings`, session.token);
+}
+
+export function createBooking(session: Session, input: NewBookingInput) {
+  return request<Booking>("POST", `/api/companies/${session.companyId}/bookings`, session.token, input);
+}
+
+export function updateBooking(session: Session, id: string, input: NewBookingInput) {
+  return request<Booking>("PUT", `/api/companies/${session.companyId}/bookings/${id}`, session.token, input);
+}
+
+export async function deleteBooking(session: Session, id: string) {
+  await request<void>("DELETE", `/api/companies/${session.companyId}/bookings/${id}`, session.token);
+}

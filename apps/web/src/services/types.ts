@@ -1,39 +1,53 @@
-import type { Booking, BusySlot, NewBookingInput, Room } from "@/utils/types";
+export type Company = { id: string; name: string };
+export type Room = { id: string; name: string; capacity: number };
+export type BusySlot = { startsAt: string; endsAt: string };
 
-/** Erro padrão da API: status HTTP, code estável, mensagem e, quando há, o campo. */
+export type Booking = {
+  id: string;
+  companyId: string;
+  roomId: string;
+  startsAt: string;
+  endsAt: string;
+  title: string;
+  responsibleEmail: string;
+  createdAt: string;
+};
+
+export type NewBookingInput = {
+  roomId: string;
+  startsAt: string;
+  endsAt: string;
+  title: string;
+  responsibleEmail: string;
+};
+
+export type Session = {
+  companyId: string;
+  companyName: string;
+  token: string;
+  timezone: string;
+};
+
+export type BookingSuggestion = {
+  roomId: string;
+  startsAt: string;
+  endsAt: string;
+};
+
 export class ApiError extends Error {
   status: number;
   code: string;
   field?: string;
   conflict?: BusySlot;
+  suggestions?: BookingSuggestion[];
 
-  constructor(status: number, code: string, message: string, field?: string, conflict?: BusySlot) {
+  constructor(status: number, code: string, message: string, field?: string, conflict?: BusySlot, suggestions?: BookingSuggestion[]) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.field = field;
     this.conflict = conflict;
+    this.suggestions = suggestions;
   }
-}
-
-export type Session = { companyId: string; token: string };
-
-/** Contrato do back-end (mock ou HTTP). O token vai explícito, como no header Authorization. */
-export interface Backend {
-  login(companyId: string, token: string): Promise<void>;
-  listRooms(token: string): Promise<Room[]>;
-  availability(token: string, roomId: string, date: string): Promise<BusySlot[]>;
-  listBookings(token: string, companyId: string): Promise<Booking[]>;
-  createBooking(token: string, companyId: string, input: NewBookingInput): Promise<Booking>;
-  deleteBooking(token: string, companyId: string, id: string): Promise<void>;
-}
-
-/** O mesmo contrato já ligado à sessão atual. É o que as telas usam. */
-export interface Api {
-  listRooms(): Promise<Room[]>;
-  availability(roomId: string, date: string): Promise<BusySlot[]>;
-  listBookings(): Promise<Booking[]>;
-  createBooking(input: NewBookingInput): Promise<Booking>;
-  deleteBooking(id: string): Promise<void>;
 }

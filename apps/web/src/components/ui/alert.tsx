@@ -1,20 +1,8 @@
 import type { ReactNode } from "react";
 import { CircleAlert } from "lucide-react";
-import { cn } from "@/utils/cn";
+import { cn } from "./cn";
 
-export function Alert({
-  variant = "default",
-  title,
-  children,
-  action,
-  className,
-}: {
-  variant?: "default" | "destructive";
-  title: string;
-  children?: ReactNode;
-  action?: ReactNode;
-  className?: string;
-}) {
+export function Alert({variant = "default", title, children, action, className}: { variant?: "default" | "destructive"; title: string; children?: ReactNode; action?: ReactNode; className?: string}) {
   return (
     <div
       role={variant === "destructive" ? "alert" : "status"}

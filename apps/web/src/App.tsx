@@ -1,42 +1,35 @@
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "@/components/AppShell";
 import { RequireAuth } from "@/components/RequireAuth";
-import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
+import { ToastProvider } from "@/components/ui/toast";
 import { BookingsPage } from "@/pages/BookingsPage";
 import { DayMapPage } from "@/pages/DayMapPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NewBookingPage } from "@/pages/NewBookingPage";
-import { paths } from "@/utils/paths";
+import { paths } from "@/routes";
 
-const router = createBrowserRouter([
-  { path: paths.login, element: <LoginPage /> },
-  {
-    element: <RequireAuth />,
-    children: [
-      {
-        element: <AppShell />,
-        children: [
-          { path: paths.bookings, element: <BookingsPage /> },
-          { path: paths.newBooking, element: <NewBookingPage /> },
-          { path: paths.dayMap, element: <DayMapPage /> },
-        ],
-      },
-    ],
-  },
-  { path: "*", element: <Navigate to={paths.bookings} replace /> },
-]);
-
-/** Provedores de contexto (tema, avisos, sessão) em volta do roteador. */
 export function App() {
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path={paths.login} element={<LoginPage />} />
+              <Route element={<RequireAuth />}>
+                <Route element={<AppShell />}>
+                  <Route path={paths.bookings} element={<BookingsPage />} />
+                  <Route path={paths.newBooking} element={<NewBookingPage />} />
+                  <Route path={paths.dayMap} element={<DayMapPage />} />
+                </Route>
+              </Route>
+              <Route path="*" element={<Navigate to={paths.bookings} replace />} />
+            </Routes>
+          </BrowserRouter>
+        </ToastProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }

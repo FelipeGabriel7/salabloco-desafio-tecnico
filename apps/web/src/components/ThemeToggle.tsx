@@ -5,10 +5,7 @@ import { useTheme, type Theme } from "@/contexts/ThemeProvider";
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   return (
-    <Segmented<Theme>
-      ariaLabel="Tema"
-      value={theme}
-      onChange={setTheme}
+    <Segmented<Theme> ariaLabel="Tema" value={theme} onChange={setTheme}
       options={[
         { value: "light", label: <Sun className="size-4" aria-hidden="true" />, ariaLabel: "Tema claro" },
         { value: "dark", label: <Moon className="size-4" aria-hidden="true" />, ariaLabel: "Tema escuro" },

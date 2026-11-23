@@ -1,12 +1,12 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
-import { cn } from "@/utils/cn";
+import { cn } from "./cn";
 
-const control =
-  "h-11 w-full rounded-[10px] border border-input bg-card px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary aria-[invalid=true]:border-destructive";
+const control ="h-11 w-full rounded-[10px] border border-input bg-card px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary aria-[invalid=true]:border-destructive";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...props }, ref) => <input ref={ref} className={cn(control, className)} {...props} />,
 );
+
 Input.displayName = "Input";
 
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
@@ -18,19 +18,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
 );
 Select.displayName = "Select";
 
-export function Field({
-  label,
-  htmlFor,
-  error,
-  className,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  error?: string;
-  className?: string;
-  children: ReactNode;
-}) {
+export function Field({ label, htmlFor, error, className, children}: {label: string; htmlFor: string; error?: string; className?: string; children: ReactNode}) {
   return (
     <div className={className}>
       <label htmlFor={htmlFor} className="mb-2 block text-[13px] font-semibold">

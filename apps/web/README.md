@@ -1,64 +1,61 @@
 # Salabloco · front-end
 
-Protótipo de alta fidelidade e funcional do app de reserva de salas de um coworking. Roda inteiro no navegador com um back-end simulado que aplica as mesmas regras do server real. Trocar para a API de verdade é uma variável de ambiente.
+Front-end React do app de reserva de salas. As regras e os dados vêm da API Express.
 
 ## Rodar
 
 ```bash
-npm install
-npm run dev        # http://127.0.0.1:5181
-npm test           # regras de domínio e utilitários
+npm run setup
+npm run dev        # API e web juntos
+npm test           # componentes e formatos de formulário/tempo
 npm run build      # typecheck + build de produção
 ```
 
-Tokens de demonstração (aparecem na tela de login): `demo-acme-7f3a9c2e`, `demo-lumen-4b8d1e6a`, `demo-brisa-2c5f9a0d`.
+Use os tokens configurados em `apps/api/.env`; o front não inclui tokens no bundle.
 
-O painel **Demo** (canto inferior esquerdo) simula carregando, erro e vazio e restaura os dados. Os dados ficam no `localStorage` e são recriados a cada dia.
+No desenvolvimento, o Vite encaminha `/api` para `http://localhost:3333`. O front usa Axios; configure `VITE_API_URL` somente se a API estiver em outra origem fora do desenvolvimento. `VITE_THEME_STORAGE_KEY` configura apenas a preferência visual de tema.
 
-## Usar a API real
-
-```bash
-VITE_API_MODE=http VITE_API_URL=http://localhost:3333 npm run dev
-```
-
-O client HTTP (`src/api/httpApi.ts`) espera o mesmo contrato do mock:
+Para persistir o tema, defina `VITE_THEME_STORAGE_KEY` em `apps/web/.env`; se ela estiver ausente, o app usa tema claro sem gravar essa preferência.
 
 | Rota | Sucesso | Erros |
 | --- | --- | --- |
-| `GET /rooms` | 200 `Room[]` | 401 |
-| `GET /rooms/:id/availability?date=AAAA-MM-DD` | 200 `{ busy: [{ startsAt, endsAt }] }` | 400, 401, 404 |
-| `GET /companies/:id/bookings` | 200 `Booking[]` | 401, 403 |
-| `POST /companies/:id/bookings` | 201 `Booking` | 400, 401, 403, 409, 422 |
-| `DELETE /companies/:id/bookings/:bookingId` | 204 | 401, 403, 404 |
+| `GET /api/companies` | 200 `Company[]` | - |
+| `GET /api/config` | 200 `{ timezone }` | 401 |
+| `GET /api/rooms` | 200 `Room[]` | - |
+| `GET /api/rooms/:id/availability?date=AAAA-MM-DD` | 200 `{ busy: [{ startsAt, endsAt }] }` | 400, 401, 404 |
+| `GET /api/companies/:id/bookings` | 200 `Booking[]` | 401, 403 |
+| `POST /api/companies/:id/bookings` | 201 `Booking` | 400, 401, 403, 409, 422 |
+| `PUT /api/companies/:id/bookings/:bookingId` | 200 `Booking` | 400, 401, 403, 404, 409, 422 |
+| `DELETE /api/companies/:id/bookings/:bookingId` | 204 | 401, 403, 404 |
 
-Header `Authorization: Bearer <token>`. Corpo de erro: `{ code, message, field?, conflict? }`. O login valida chamando `GET /companies/:id/bookings`.
+O login carrega empresas em `GET /api/companies`; depois valida token e timezone na API. O token e a sessão ficam só em memória. Salas/empresas vêm do servidor, sem mocks no front.
 
 ## Estrutura
 
 ```
 src/
-├─ components/    shell, agenda, linha do tempo, rota protegida, ui/ (padrão shadcn)
-├─ contexts/      sessão (sessionStorage) e tema
+├─ components/    navegação, estados de tela e componentes ui
+├─ contexts/      sessão em memória e tema
 ├─ hooks/         useAsync
 ├─ pages/         Login, Reservas, Mapa do dia, Nova reserva
-├─ services/      contrato (types), mockApi, httpApi e createApi (trata 401 num só lugar)
-├─ utils/         regras puras e testadas, esquemas zod, URLs, helpers
+├─ services/      chamadas Axios, tipos da API e conversão de horário
+├─ routes.ts      caminhos React e prefill da reserva
 ├─ App.tsx        provedores e rotas
 └─ main.tsx
+tests/            testes unitários do front
 ```
 
 ## Decisões
 
-- **Domínio puro e sem relógio global.** `checkRules(input, now)` recebe o "agora". Os testes fixam a hora.
+- **Servidor como fonte da verdade.** O front valida os campos do formulário; o back-end aplica as regras de reserva.
 - **Intervalo semiaberto.** 10:00–11:00 e 11:00–12:00 coexistem.
-- **Fuso do coworking.** Tudo é interpretado em `America/Sao_Paulo`, não no do navegador. A API guarda ISO em UTC. Teste cobre 23:30 local, que é o dia seguinte em UTC.
+- **Fuso do coworking.** O front busca `timezone` em `/api/config`; a API guarda instantes ISO em UTC.
 - **Expediente das 07:00 às 22:00.** Fora disso a reserva é recusada.
-- **Disponibilidade sem dados de terceiros.** A API devolve só intervalos. O front cruza com as próprias reservas para pintar "sua empresa".
+- **Disponibilidade sem dados de terceiros.** A API devolve só intervalos ocupados, sem título, e-mail ou empresa.
 - **Reserva alheia no DELETE responde 404**, igual a inexistente.
-- **Token em `sessionStorage`**, nunca em `localStorage`. Qualquer 401 vira logout e volta ao login com aviso.
+- **Token só em memória React.** Ao atualizar a página, a pessoa precisa entrar novamente.
 - **Tailwind v4 + tokens no formato do shadcn/ui.** Os componentes de `ui/` seguem a API do shadcn. Dá para trocá-los pelos gerados com `npx shadcn add` sem mexer nas páginas.
 
 ## Pendente
 
-- Back-end real (a pasta `tests/contract/bruno/` do projeto tem a coleção de requisições).
-- i18n PT/EN, teste end-to-end com Playwright.
+- Testes end-to-end com Playwright.

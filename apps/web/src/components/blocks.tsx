@@ -1,17 +1,8 @@
 import type { ReactNode } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { describeError } from "@/utils/errors";
-
-export function PageHeader({
-  title,
-  description,
-  action,
-}: {
-  title: string;
-  description?: string;
-  action?: ReactNode;
-}) {
+import { ApiError } from "@/services/types";
+export function PageHeader({title, description, action}: {title: string; description?: string; action?: ReactNode}) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="grid gap-1">
@@ -23,17 +14,7 @@ export function PageHeader({
   );
 }
 
-export function EmptyState({
-  icon,
-  title,
-  description,
-  action,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  action?: ReactNode;
-}) {
+export function EmptyState({icon, title, description, action}: {icon: ReactNode; title: string; description: string; action?: ReactNode}) {
   return (
     <div className="grid justify-items-center gap-2 rounded-[14px] border border-dashed px-4 py-16 text-center">
       <div className="mb-1 grid size-12 place-items-center rounded-full bg-muted text-muted-foreground [&_svg]:size-5">
@@ -47,7 +28,10 @@ export function EmptyState({
 }
 
 export function ErrorAlert({ error, onRetry }: { error: unknown; onRetry: () => void }) {
-  const { title, message } = describeError(error);
+
+  const title = error instanceof ApiError ? `Erro ${error.status} (${error.code})` : "Erro inesperado";
+  const message = error instanceof Error ? error.message : "Erro inesperado.";
+
   return (
     <Alert
       variant="destructive"
