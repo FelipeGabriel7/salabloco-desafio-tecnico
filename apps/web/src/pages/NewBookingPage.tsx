@@ -18,13 +18,33 @@ import { addDaysStr, dateOf, isValidDate, timeOf, toIso, todayStr } from "@/serv
 import { paths } from "@/routes";
 import type { Booking, Room } from "@/services/types";
 
+function validTime(value: string) {
+  const parts = value.split(":");
+  if (parts.length !== 2 || parts[0].length !== 2 || parts[1].length !== 2) return false;
+  if (![...parts[0], ...parts[1]].every((char) => char >= "0" && char <= "9")) return false;
+  const hour = Number(parts[0]);
+  const minute = Number(parts[1]);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || minute < 0 || minute > 59) return false;
+  return hour >= 7 && (hour < 22 || (hour === 22 && minute === 0));
+}
+
 export const bookingSchema = z.object({
   roomId: z.string().min(1, "Escolha uma sala"),
   date: z.string().date("Informe uma data válida"),
-  start: z.string().min(1, "Informe o início"),
-  end: z.string().min(1, "Informe o fim"),
-  title: z.string().trim().min(1, "Informe o título da reunião"),
-  responsibleEmail: z.string().trim().email("Informe um e-mail válido"),
+  start: z.string().min(1, "Informe o início").refine((value) => !value || validTime(value), "Início deve estar entre 07:00 e 22:00"),
+  end: z.string().min(1, "Informe o fim").refine((value) => !value || validTime(value), "Fim deve estar entre 07:00 e 22:00"),
+  title: z.string().trim().min(1, "Informe o título da reunião").max(80, "Use até 80 caracteres"),
+  responsibleEmail: z.string().trim().email("Informe um e-mail válido").max(254, "Use até 254 caracteres"),
+}).superRefine((values, context) => {
+  if (!validTime(values.start) || !validTime(values.end)) return;
+  const [startHour, startMinute] = values.start.split(":").map(Number);
+  const [endHour, endMinute] = values.end.split(":").map(Number);
+  const duration = endHour * 60 + endMinute - startHour * 60 - startMinute;
+  if (duration <= 0) {
+    context.addIssue({ code: "custom", path: ["end"], message: "A data inicial é maior que a data final, ajuste e tente novamente." });
+  } else if (duration < 30 || duration > 240) {
+    context.addIssue({ code: "custom", path: ["end"], message: "A reserva deve durar entre 30 minutos e 4 horas." });
+  }
 });
 
 type BookingValues = z.infer<typeof bookingSchema>;
@@ -75,7 +95,7 @@ function NewBookingForm({ rooms, booking }: { rooms: Room[]; booking?: Booking }
     ? timeOf(booking.endsAt, session!.timezone)
     : params.get("fim") ?? "";
 
-  const {register, handleSubmit, control, setValue, formState: { errors, isSubmitting },} = useForm<BookingValues>({
+  const {register, handleSubmit, control, setValue, setError, formState: { errors, isSubmitting },} = useForm<BookingValues>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
       roomId: defaultRoomId,
@@ -108,6 +128,11 @@ function NewBookingForm({ rooms, booking }: { rooms: Room[]; booking?: Booking }
         title: form.title.trim(),
         responsibleEmail: form.responsibleEmail.trim(),
       };
+
+      if (Date.parse(input.startsAt) < Date.now()) {
+        setError("start", { message: "Não é possível reservar no passado." });
+        return;
+      }
 
       if (booking) {
         await updateBooking(session!, booking.id, input);
@@ -143,7 +168,7 @@ function NewBookingForm({ rooms, booking }: { rooms: Room[]; booking?: Booking }
 
   return (
     <Card className="mx-auto grid max-w-2xl gap-5 p-5 md:p-6">
-      <form onSubmit={handleSubmit(submit)} className="grid gap-5">
+      <form noValidate onSubmit={handleSubmit(submit)} className="grid gap-5">
         {requestError ? (
           <Alert variant="destructive" title="Não foi possível reservar">
             {requestError}
@@ -181,10 +206,10 @@ function NewBookingForm({ rooms, booking }: { rooms: Room[]; booking?: Booking }
             <Input id="date" type="date" min={today} {...register("date")} />
           </Field>
           <Field label="Início" htmlFor="start" error={errors.start?.message}>
-            <Input id="start" type="time" step={900} {...register("start")} />
+            <Input id="start" type="time" min="07:00" max="22:00" {...register("start")} />
           </Field>
           <Field label="Fim" htmlFor="end" error={errors.end?.message}>
-            <Input id="end" type="time" step={900} {...register("end")} />
+            <Input id="end" type="time" min="07:00" max="22:00" {...register("end")} />
           </Field>
         </div>
 

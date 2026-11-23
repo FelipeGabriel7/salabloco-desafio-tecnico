@@ -1,5 +1,5 @@
 import { tomorrow } from "../fixtures/api";
-import { step, test } from "../fixtures/test";
+import { expect, step, test } from "../fixtures/test";
 
 test.describe("Funcionalidade: mapa do dia", () => {
   test.beforeEach(async ({ loginPage }) => {
@@ -15,6 +15,19 @@ test.describe("Funcionalidade: mapa do dia", () => {
     await step("Então o formulário abre com sala e data preenchidas", () =>
       bookingForm.expectValues({ room: "ufmg", date: tomorrow() }),
     );
+  });
+
+  test("mostra períodos livres e ocupados da sala", async ({ shell, dayMap, api, page }) => {
+    await api.createBooking("acme", {
+      roomId: "savassi", startsAt: `${tomorrow()}T10:00:00-03:00`,
+      endsAt: `${tomorrow()}T11:00:00-03:00`, title: "E2E mapa",
+    });
+    await shell.goTo("Mapa do dia");
+    await dayMap.selectDate(tomorrow());
+    const room = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Sala Savassi" }) });
+    await expect(room).toContainText("07:00–10:00");
+    await expect(room).toContainText("11:00–22:00");
+    await expect(room).toContainText("Ocupada: 10:00–11:00");
   });
 
   test("Cenário: falha ao carregar e tentar novamente", async ({ shell, dayMap }) => {

@@ -59,8 +59,12 @@ export function getRooms() {
   return request<Room[]>("GET", "/api/rooms");
 }
 
+export function getAvailabilityDetails(token: string, roomId: string, date: string) {
+  return request<{ busy: BusySlot[]; free: BusySlot[] }>("GET", `/api/rooms/${roomId}/availability?date=${date}`, token);
+}
+
 export async function getAvailability(token: string, roomId: string, date: string) {
-  const response = await request<{ busy: BusySlot[] }>("GET", `/api/rooms/${roomId}/availability?date=${date}`, token);
+  const response = await getAvailabilityDetails(token, roomId, date);
   return response.busy;
 }
 

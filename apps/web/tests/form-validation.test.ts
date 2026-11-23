@@ -28,10 +28,13 @@ describe("campos do formulário de reserva", () => {
     expect(bookingSchema.safeParse({ ...validBooking, responsibleEmail: "ana@" }).success).toBe(false);
   });
 
-  it("não decide duração ou expediente; essas regras são do back-end", () => {
-    expect(bookingSchema.safeParse({ ...validBooking, start: "14:00", end: "14:10" }).success).toBe(true);
-    expect(bookingSchema.safeParse({ ...validBooking, start: "06:00", end: "06:10" }).success).toBe(true);
-    expect(bookingSchema.safeParse({ ...validBooking, title: "x".repeat(81) }).success).toBe(true);
+  it("valida limites do expediente e duração antes do envio", () => {
+    expect(bookingSchema.safeParse({ ...validBooking, start: "14:00", end: "14:10" }).success).toBe(false);
+    expect(bookingSchema.safeParse({ ...validBooking, start: "06:00", end: "06:10" }).success).toBe(false);
+    expect(bookingSchema.safeParse({ ...validBooking, end: "22:01" }).success).toBe(false);
+    expect(bookingSchema.safeParse({ ...validBooking, start: "07:00", end: "07:30" }).success).toBe(true);
+    expect(bookingSchema.safeParse({ ...validBooking, start: "21:30", end: "22:00" }).success).toBe(true);
+    expect(bookingSchema.safeParse({ ...validBooking, title: "x".repeat(81) }).success).toBe(false);
   });
 });
 

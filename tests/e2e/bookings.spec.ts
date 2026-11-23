@@ -31,13 +31,13 @@ test.describe("Funcionalidade: reservar uma sala", () => {
     });
   });
 
-  test("Cenário: regra de negócio recusada pelo servidor", async ({ shell, bookingForm }) => {
+  test("Cenário: horário fora do expediente é recusado no formulário", async ({ shell, bookingForm }) => {
     await step("Dado que a Acme abre o formulário", () => shell.goTo("Nova reserva"));
     await step("Quando tenta reservar antes do expediente", () =>
       bookingForm.create({ start: "06:00", end: "07:00", title: "E2E Cedo", email: "ana@acme.test" }),
     );
-    await step("Então vê a mensagem do servidor e continua no formulário", async () => {
-      await bookingForm.expectServerError("O coworking funciona das 07:00 às 22:00");
+    await step("Então vê a mensagem de validação e continua no formulário", async () => {
+      await bookingForm.expectFieldError("Início deve estar entre 07:00 e 22:00");
       await bookingForm.expectPath("/reservas/nova");
     });
   });
