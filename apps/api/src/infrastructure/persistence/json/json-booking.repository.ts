@@ -37,12 +37,16 @@ function queueWrite<T>(operation: () => Promise<T>): Promise<T> {
   return result;
 }
 
+function readInQueue(path: string) {
+  return queueWrite(() => readDatabase(path));
+}
+
 export async function listRooms(path: string) {
-  return (await readDatabase(path)).rooms;
+  return (await readInQueue(path)).rooms;
 }
 
 export async function listCompanies(path: string) {
-  return (await readDatabase(path)).companies;
+  return (await readInQueue(path)).companies;
 }
 
 export async function roomExists(path: string, roomId: string) {
@@ -51,7 +55,7 @@ export async function roomExists(path: string, roomId: string) {
 }
 
 export async function listCompanyBookings(path: string, companyId: string) {
-  const { bookings } = await readDatabase(path);
+  const { bookings } = await readInQueue(path);
 
   return bookings
     .filter((booking) => booking.companyId === companyId)
@@ -59,7 +63,7 @@ export async function listCompanyBookings(path: string, companyId: string) {
 }
 
 export async function listRoomBookings(path: string, roomId: string) {
-  const { bookings } = await readDatabase(path);
+  const { bookings } = await readInQueue(path);
   return bookings.filter((booking) => booking.roomId === roomId);
 }
 

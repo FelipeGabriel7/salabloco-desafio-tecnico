@@ -88,4 +88,14 @@ describe("concorrência", () => {
     expect(file.bookings.filter((item: { roomId: string }) => item.roomId === "ufmg")).toHaveLength(1);
     expect((await list("brisa")).body).toHaveLength(1);
   });
+
+  it("leituras e escritas ao mesmo tempo nunca respondem 500", async () => {
+    const slots = [["08:00", "09:00"], ["12:00", "13:00"], ["14:00", "15:00"], ["16:00", "17:00"], ["18:00", "19:00"]];
+    const writes = slots.map(([start, end]) => create("acme", booking({ roomId: "curral", startsAt: at(start), endsAt: at(end) })));
+    const reads = Array.from({ length: 20 }, () => list("acme"));
+
+    const responses = await Promise.all([...writes, ...reads]);
+
+    expect(responses.filter((res) => res.status >= 500)).toHaveLength(0);
+  });
 });
