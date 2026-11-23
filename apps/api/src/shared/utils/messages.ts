@@ -13,5 +13,6 @@ export const messages = {
   inThePast: "Não é possível reservar no passado.",
   roomNotFound: "Sala não encontrada.",
   bookingConflict: "A sala já está reservada neste horário.",
+  rateLimited: "Muitas requisições. Aguarde um pouco e tente novamente.",
   internal: "Erro inesperado.",
 } as const;

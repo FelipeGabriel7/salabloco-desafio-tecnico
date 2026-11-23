@@ -7,3 +7,5 @@ process.env.COWORKING_TIMEZONE = "America/Sao_Paulo";
 process.env.COMPANY_ACME_TOKEN = "acme-test-token";
 process.env.COMPANY_LUMEN_TOKEN = "lumen-test-token";
 process.env.COMPANY_BRISA_TOKEN = "brisa-test-token";
+process.env.RATE_LIMIT_MAX = "100000";
+process.env.AUTH_FAIL_MAX = "100000";

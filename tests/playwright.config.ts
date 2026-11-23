@@ -45,6 +45,8 @@ export default defineConfig({
             COMPANY_ACME_TOKEN: env.tokens.acme,
             COMPANY_LUMEN_TOKEN: env.tokens.lumen,
             COMPANY_BRISA_TOKEN: env.tokens.brisa,
+            RATE_LIMIT_MAX: "100000",
+            AUTH_FAIL_MAX: "100000",
           },
         },
         {

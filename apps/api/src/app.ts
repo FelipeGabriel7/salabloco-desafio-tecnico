@@ -1,6 +1,7 @@
 import express from "express";
 import { config } from "./shared/config.ts";
 import { errorHandler, authenticate } from "./shared/middleware.ts";
+import { createRateLimit } from "./shared/rate-limit.ts";
 import { messages } from "./shared/utils/messages.ts";
 import { bookingRoutes } from "./modules/bookings/routes/bookings.routes.ts";
 import { roomRoutes } from "./modules/rooms/rooms.routes.ts";
@@ -9,6 +10,8 @@ import { listCompanies } from "./infrastructure/persistence/json/json-booking.re
 export const app = express();
 
 app.disable("x-powered-by");
+app.set("trust proxy", config.trustProxy);
+app.use(createRateLimit(config.rateLimit));
 app.use(express.json({
   limit: "16kb"
 }));
