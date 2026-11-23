@@ -1,18 +1,22 @@
-// Única porta de entrada da configuração dos testes. Nada de URL ou token solto nos specs.
-
-function required(name: string, fallback?: string): string {
-  const value = process.env[name] ?? fallback;
-  if (value === undefined) throw new Error(`Variável de ambiente ausente: ${name}`);
-  return value;
+function read(name: string, fallback: string) {
+  return process.env[name] ?? fallback;
 }
 
 export const env = {
-  apiUrl: required("API_URL", "http://localhost:3333"),
-  webUrl: required("WEB_URL", "http://localhost:5181"),
+  apiUrl: read("API_URL", "http://127.0.0.1:3333"),
+  webUrl: read("WEB_URL", "http://127.0.0.1:5181"),
   startServers: process.env.START_SERVERS !== "0",
   tokens: {
-    acme: required("ACME_TOKEN", "demo-acme-7f3a9c2e"),
-    lumen: required("LUMEN_TOKEN", "demo-lumen-4b8d1e6a"),
-    brisa: required("BRISA_TOKEN", "demo-brisa-2c5f9a0d"),
+    acme: read("ACME_TOKEN", "acme-local-7f3a9c2e"),
+    lumen: read("LUMEN_TOKEN", "lumen-local-4b8d1e6a"),
+    brisa: read("BRISA_TOKEN", "brisa-local-2c5f9a0d"),
   },
-} as const;
+};
+
+export type CompanyId = keyof typeof env.tokens;
+
+export const companies: Record<CompanyId, string> = {
+  acme: "Acme Tecnologia",
+  lumen: "Lumen Estúdio",
+  brisa: "Brisa Contabilidade",
+};
