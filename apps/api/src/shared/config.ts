@@ -9,7 +9,9 @@ if (!acmeToken || !lumenToken || !brisaToken) {
 export const config = {
   port: Number(process.env.PORT ?? 3333),
   timezone: process.env.COWORKING_TIMEZONE ?? "America/Sao_Paulo",
-  dbPath: process.env.DB_PATH ?? "./data/db.json",
+  dbPath:
+    process.env.DB_PATH ??
+    (process.env.VERCEL ? "/tmp/salabloco.json" : "./data/db.json"),
   companyTokens: [
     { companyId: "acme", token: acmeToken },
     { companyId: "lumen", token: lumenToken },
