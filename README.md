@@ -47,7 +47,7 @@ EMPRESA_BRISA = 1e7f04ef20df85773c43b98d811842942b87884b5635280fa07389b05523b7a0
 
 ## Como rodar
 
-Requisitos: **Node 22.18 ou mais novo**, npm e dependências do Playwright para os testes de navegador. A geração local do Allure também requer Java.
+Requisitos: **Node 22.18 ou mais novo**, npm e dependências do Playwright para os testes de navegador. O relatório usa Allure 3 via npm.
 
 ```bash
 npm ci
