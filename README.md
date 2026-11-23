@@ -8,6 +8,18 @@ Este é o meu desafio técnico para desenvolvedor júnior: API em Node.js + Type
 
 - Aplicação publicada em produção: https://salabloco-web.vercel.app/
 - API Publicada em produção: https://salabloco-api.vercel.app/api/health
+- Relatório do Allure Report: https://felipegabriel7.github.io/salabloco-desafio-tecnico/
+
+## Como acessar
+```js
+// A aplicação utiliza alguns tokens de exemplo pré-configurados em produção
+EMPRESA_ACME = 5a2b5d4de7f879225b437f4fce89d58b0ced09cd89cc575a82958b0c6ac700fe
+EMPRESA_LUMEN = 673a1b45bce32e7cf35e0d28529837db2340deb15cf36022e0e8127b0b76d110
+EMPRESA_BRISA = 1e7f04ef20df85773c43b98d811842942b87884b5635280fa07389b05523b7a0
+
+// Para acessar em produção pasta selecionar a empresa e informar seu respectivo token
+
+```
 
 ## Como rodar
 
