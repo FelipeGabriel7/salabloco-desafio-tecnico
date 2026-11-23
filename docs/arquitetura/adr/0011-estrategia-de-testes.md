@@ -18,10 +18,10 @@ Sigo a **pirâmide de testes** e testo cada regra **no nível mais baixo em que 
 ### Como escrevo os testes de interface
 
 - **BDD:** cada teste é um cenário com passos **Dado / Quando / Então** (`test.step`), que aparecem no relatório.
-- **Page Objects:** os specs só falam com páginas (`tests/pages`). Nenhum seletor fica no spec.
-- **Seletores estáveis:** por papel e rótulo acessível (`getByRole`, `getByLabel`), nunca por classe CSS.
-- **Auto-healing:** cada elemento tem um seletor alternativo (`locator.or`), usado se o principal deixar de existir.
-- **Sem flaky:** banco temporário, dados criados e apagados pela API em cada teste, datas relativas, nenhum `sleep` e um worker só.
+- **Page Objects:** as páginas em `tests/pages` concentram parte das interações; alguns specs também usam seletores diretamente.
+- **Seletores:** priorizo papel e rótulo acessível (`getByRole`, `getByLabel`).
+- **Fallback:** alguns seletores usam alternativas; isso não garante recuperação automática para toda mudança de interface.
+- **Isolamento:** banco temporário, dados criados e apagados pela API e um worker reduzem interferência. Playwright permite retries; uma execução verde não garante ausência de flakiness.
 
 ### Supertest em vez de Playwright para a API
 
