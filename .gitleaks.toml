@@ -2,7 +2,10 @@
 useDefault = true
 
 [allowlist]
-description = "Tokens locais de teste, públicos por definição"
+description = "Tokens de teste e credenciais de demonstração, públicos por definição"
+regexTarget = "line"
 regexes = [
   '''(acme|lumen|brisa)-(local|test)-[0-9a-z-]+''',
+  '''EMPRESA_(ACME|LUMEN|BRISA) = [0-9a-f]{64}''',
+  '''^\| (Acme Tecnologia|Lumen Estúdio|Brisa Contabilidade) \| `[0-9a-f]{64}` \|$''',
 ]

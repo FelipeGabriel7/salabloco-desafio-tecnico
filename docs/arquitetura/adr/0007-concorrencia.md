@@ -1,6 +1,6 @@
 # ADR 0007. Concorrência na criação de reservas
 
-> **Atualização:** o fluxo atual usa a abstração `Storage`: fila local para arquivo e trava com TTL para Redis. Veja [ADR 0016](0016-redis-na-hospedagem.md) para a limitação da trava distribuída.
+> **Atualização:** o fluxo atual usa a abstração `Storage`: fila local para arquivo e trava distribuída para Redis, com gravação condicionada à trava ([ADR 0016](0016-redis-na-hospedagem.md)).
 
 ## Decisão
 

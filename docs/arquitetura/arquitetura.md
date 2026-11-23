@@ -102,7 +102,7 @@ Erros viram `{ code, message, field? }` no error handler. Erro inesperado vira 5
 | --- | --- | --- |
 | Regra de negócio | Services; relógio do sistema via `Date.now()` | [0002](adr/0002-estrutura-mvc-servico.md) |
 | Isolamento entre empresas | Empresa vem do token; filtro por empresa; 404 no recurso alheio | [0005](adr/0005-autenticacao.md) |
-| Concorrência | Fila local ou trava Redis; TTL da trava tem limitação | [0007](adr/0007-concorrencia.md) |
+| Concorrência | Fila local ou trava Redis com gravação condicionada à trava | [0007](adr/0007-concorrencia.md) |
 | Escrita em arquivo | Temporário e rename reduzem risco de arquivo parcial | [0003](adr/0003-persistencia.md) |
 | Força bruta | Rate limit ainda não implementado | [0012](adr/0012-limite-de-requisicoes.md) |
 | Tempo | `Intl` e ISO com fuso; transições de horário de verão precisam de validação | [0006](adr/0006-tempo-e-fuso.md) |

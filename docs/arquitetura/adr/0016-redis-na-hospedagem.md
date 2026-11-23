@@ -15,7 +15,9 @@ O repository não mudou. Ele depende de um `Storage` com quatro operações, e c
 | `exclusive` | fila em memória ([ADR 0007](0007-concorrencia.md)) | trava `SET salabloco:lock NX PX 5000` |
 | `snapshot` | leitura dentro da fila | `GET`, que já é atômico |
 
-A trava guarda um id aleatório e só é liberada por quem a criou (script Lua que confere o dono antes de apagar). A trava expira em 5 segundos e não é renovada. Se uma operação ultrapassar esse prazo, outra instância pode obter a trava antes da primeira gravar; `save` não verifica novamente quem é o dono. Portanto, há risco de gravação obsoleta e a exclusão mútua não é garantida em todas as condições.
+A trava guarda um id aleatório e só é liberada por quem a criou (script Lua que confere o dono antes de apagar). Ela expira em 5 segundos, para não ficar presa se a função cair no meio.
+
+Para que a expiração não abra brecha, **a gravação também confere o dono da trava**. Dentro de `exclusive`, o `save` roda um script Lua que só faz o `SET` se a trava ainda pertencer àquela operação. Se a operação demorou mais de 5 segundos e outra instância assumiu a trava, a gravação é recusada e a operação falha, em vez de sobrescrever dados com uma versão antiga. Há teste de unidade para esse caso.
 
 ## Por quê
 
@@ -24,7 +26,7 @@ Na Vercel a API é uma função serverless: o `/tmp` some quando a função é r
 ## Consequências
 
 - **Ganho:** com Redis configurado, os dados são compartilhados entre instâncias e não dependem do `/tmp` de uma função.
-- **Limite:** a trava com TTL reduz corridas, mas não fornece garantia transacional forte se expirar durante a operação. É necessário reforçar a atomicidade antes de afirmar que conflitos são impossíveis.
+- **Garantia:** checagem de conflito e gravação acontecem sob a mesma trava, e uma gravação atrasada é recusada. Assim, duas instâncias não aceitam a mesma sala no mesmo horário.
 - **Ganho:** a troca ficou só na infraestrutura. Services, controllers, regras e front não mudaram, como o [ADR 0003](0003-persistencia.md) previa.
 - **Custo:** a cada escrita o banco inteiro é lido e regravado, como no arquivo. Neste volume não pesa.
 - **Custo:** escritas viram sequenciais entre todas as instâncias. Para um coworking é aceitável.

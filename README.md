@@ -14,7 +14,15 @@ Este é o meu desafio técnico para desenvolvedor júnior: API em Node.js + Type
 - Health da API: https://salabloco-api.vercel.app/api/health
 - Relatório Allure: https://felipegabriel7.github.io/salabloco-desafio-tecnico/
 
-Para entrar, escolha uma empresa e informe o token correspondente. Os tokens locais de exemplo estão em `apps/api/.env.example`; as credenciais de produção são configuradas no ambiente da API e não devem ser publicadas no repositório. Se o repositório for entregue a terceiros, compartilhe eventuais credenciais de avaliação por um canal adequado e use dados fictícios.
+Para entrar na versão publicada, escolha a empresa e informe o token dela. São **credenciais de demonstração**, públicas de propósito para quem for avaliar, e dão acesso só a dados fictícios:
+
+| Empresa | Token |
+| --- | --- |
+| Acme Tecnologia | `5a2b5d4de7f879225b437f4fce89d58b0ced09cd89cc575a82958b0c6ac700fe` |
+| Lumen Estúdio | `673a1b45bce32e7cf35e0d28529837db2340deb15cf36022e0e8127b0b76d110` |
+| Brisa Contabilidade | `1e7f04ef20df85773c43b98d811842942b87884b5635280fa07389b05523b7a0` |
+
+Para rodar localmente, os tokens ficam em `apps/api/.env` (criado a partir do `.env.example`).
 
 ## A aplicação
 
@@ -148,7 +156,7 @@ Cada decisão tem um ADR com o motivo, as consequências e as alternativas que d
 | A empresa vem do token | O isolamento é decidido no servidor | [0005](docs/arquitetura/adr/0005-autenticacao.md) |
 | 404, e não 403, para reserva alheia | Não confirma que o id existe | [0005](docs/arquitetura/adr/0005-autenticacao.md) |
 | ISO 8601 com fuso, via `Intl` | Evitar entradas sem fuso e interpretar o dia no fuso configurado | [0006](docs/arquitetura/adr/0006-tempo-e-fuso.md) |
-| Verificação e escrita serializadas | Evitar corridas no armazenamento local; a trava Redis tem limitações descritas abaixo | [0007](docs/arquitetura/adr/0007-concorrencia.md) |
+| Verificação e escrita serializadas | Evitar corridas no armazenamento local; no Redis, trava distribuída com gravação condicionada à trava | [0007](docs/arquitetura/adr/0007-concorrencia.md) |
 | Redis opcional na Vercel | Compartilhar dados entre instâncias quando configurado | [0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md) |
 | Segredos no ambiente | `.env` fora do git; `.env.example` contém valores locais de exemplo | [0013](docs/arquitetura/adr/0013-configuracao-e-segredos.md) |
 
@@ -195,9 +203,10 @@ O pipeline fica em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) e roda
 | Etapa | O que garante |
 | --- | --- |
 | Tipos, unitários e API | `typecheck`, Vitest do front e da API, build |
-| Segurança | Gitleaks e `npm audit` das dependências de produção |
+| Segurança | Gitleaks, `npm audit` das dependências de produção e checagem de que nenhum token local foi para o bundle do front |
 | Análise estática | CodeQL |
 | Contrato | Coleção Bruno contra a API rodando |
+| API com Redis | A suíte da API contra um Redis real (Redis + SRH no Docker) |
 | Interface | Playwright no Chromium |
 | Performance | Artillery com limites de p95 e p99 |
 | Relatório | Allure consolidado, publicado no GitHub Pages em https://felipegabriel7.github.io/salabloco-desafio-tecnico/, e resumo de cada etapa na página da execução |
@@ -216,13 +225,13 @@ São dois projetos na Vercel, um para a API e outro para o front, publicados pel
 3. Em *Settings → Tokens* da Vercel, gere um token. No GitHub, em *Settings → Secrets and variables → Actions*, crie `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_API` e `VERCEL_PROJECT_ID_WEB` (os IDs ficam em *Settings → General* de cada projeto).
 4. Faça push na `main`. O deploy automático pelo Git da Vercel fica desligado (`git.deploymentEnabled: false`): quem publica é o pipeline, e só depois dos testes.
 
-**Persistência na hospedagem:** a integração Redis está configurada no ambiente publicado, conforme a validação de funcionamento. Com URL e token do Redis configurados, a API usa Redis; caso contrário, usa arquivo. Na Vercel, o fallback em `/tmp` é temporário e isolado por instância, portanto **reservas podem desaparecer ou divergir**. Confirme as variáveis no projeto após mudanças de ambiente. A trava Redis expira após 5 segundos e não é renovada; uma operação que exceda esse prazo pode perder a exclusividade. Não há garantia transacional forte entre instâncias ([ADR 0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md)).
+**Persistência na hospedagem:** a integração Redis está configurada no ambiente publicado, conforme a validação de funcionamento. Com URL e token do Redis configurados, a API usa Redis; caso contrário, usa arquivo. Na Vercel, o fallback em `/tmp` é temporário e isolado por instância, portanto **reservas podem desaparecer ou divergir**. Confirme as variáveis no projeto após mudanças de ambiente. No Redis, a gravação só acontece se a instância ainda for dona da trava; se a trava expirou, a operação falha em vez de sobrescrever dados ([ADR 0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md)).
 
 ## O que ainda falta
 
 - No login, token de outra empresa (403) mostra "Confira se a API está ativa" em vez de "token inválido".
 - Limite de requisições (429) e comparação de token com `timingSafeEqual`.
-- Fortalecer a concorrência entre instâncias com operação atômica no banco ou mecanismo com renovação/fencing da trava.
+- Migrar para um banco transacional (Postgres com constraint de exclusão) se o volume crescer, em vez de regravar o banco inteiro a cada escrita.
 - Validar a persistência Redis efetiva no ambiente publicado e os casos de transição de fuso/horário de verão.
 - Adicionar lint ao CI.
 
