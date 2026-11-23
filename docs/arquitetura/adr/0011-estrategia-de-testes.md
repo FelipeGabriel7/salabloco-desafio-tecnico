@@ -8,11 +8,11 @@ Sigo a **pirâmide de testes** e testo cada regra **no nível mais baixo em que 
 | --- | --- | --- |
 | Unidade | Vitest | Fuso, expediente, sobreposição, esquemas do formulário |
 | API | Vitest + Supertest | Rotas, regras com as duas bordas, isolamento entre empresas, concorrência |
-| Contrato | zod nos testes da API e Bruno | Cada resposta tem exatamente o formato combinado |
+| Contrato | Zod nos testes da API e Bruno | Verificam os formatos e cenários cobertos; não validam automaticamente todo o OpenAPI |
 | Interface | Playwright | Fluxos críticos, usabilidade, isolamento visto na tela |
-| Acessibilidade | axe-core | Nenhuma violação grave nas telas principais |
-| Performance | Artillery | p95 e p99 sob carga, e um único 201 quando muitos disputam o mesmo horário |
-| Segurança | gitleaks, `npm audit`, CodeQL | Segredos, dependências vulneráveis e falhas no código |
+| Acessibilidade | axe-core | Procura violações automatizáveis nas telas cobertas; não substitui revisão manual |
+| Performance | Artillery | Mede tempos de resposta e verifica os limites configurados; não prova sozinho que apenas uma reserva foi criada |
+| Segurança | gitleaks, `npm audit`, CodeQL | Procura padrões de segredos, vulnerabilidades conhecidas e problemas estáticos, sem garantir ausência de falhas |
 | Relatório | Allure | Um relatório só, com screenshot de cada teste de interface e vídeo e trace das falhas |
 
 ### Como escrevo os testes de interface
