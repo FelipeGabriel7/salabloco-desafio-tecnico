@@ -20,7 +20,7 @@ env:
 
 jobs:
   unitarios:
-    name: Tipos, unitários e API
+    name: Tipos, lint, unitários e API
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +31,7 @@ jobs:
       - run: npm ci
       - run: npm run setup
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm test
       - run: npm run test:api
       - run: npm run build
@@ -90,7 +91,7 @@ jobs:
       - run: npm run setup
       - name: Subir a API
         run: |
-          DB_PATH="$RUNNER_TEMP/db.json" npm run start -w apps/api &
+          DB_PATH="$RUNNER_TEMP/db.json" RATE_LIMIT_MAX=100000 AUTH_FAIL_MAX=100000 npm run start -w apps/api &
           curl -fs --retry 30 --retry-delay 1 --retry-all-errors "$API_URL/api/health"
       - run: npm run test:contract
       - uses: actions/upload-artifact@v4
@@ -150,7 +151,7 @@ jobs:
       - run: npm run setup
       - name: Subir a API
         run: |
-          DB_PATH="$RUNNER_TEMP/db.json" npm run start -w apps/api &
+          DB_PATH="$RUNNER_TEMP/db.json" RATE_LIMIT_MAX=100000 AUTH_FAIL_MAX=100000 npm run start -w apps/api &
           curl -fs --retry 30 --retry-delay 1 --retry-all-errors "$API_URL/api/health"
       - run: npm run test:performance
         env:
@@ -194,7 +195,7 @@ jobs:
             echo ""
             echo "| Etapa | Resultado |"
             echo "| --- | --- |"
-            echo "| Tipos, unitários e API | ${{ needs.unitarios.result }} |"
+            echo "| Tipos, lint, unitários e API | ${{ needs.unitarios.result }} |"
             echo "| Segurança (DevSecOps) | ${{ needs.seguranca.result }} |"
             echo "| Análise estática (CodeQL) | ${{ needs.sast.result }} |"
             echo "| Contrato (Bruno) | ${{ needs.contrato.result }} |"

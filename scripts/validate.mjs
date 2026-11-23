@@ -20,6 +20,7 @@ const testEnv = {
 
 const steps = [
   ["Tipos", "npm run typecheck"],
+  ["Lint", "npm run lint"],
   ["Unitários do front", "npm test"],
   ["API (Vitest + Supertest)", "npm run test:api"],
   ["Contrato (Bruno)", `npm run test:contract -w tests -- --env-var baseUrl=${apiUrl}/api --env-var token=${tokens.COMPANY_ACME_TOKEN} --env-var otherToken=${tokens.COMPANY_LUMEN_TOKEN}`],
@@ -34,9 +35,8 @@ function run(command, env = testEnv) {
 
 async function waitFor(url) {
   for (let attempt = 0; attempt < 30; attempt++) {
-    try {
-      if ((await fetch(url)).ok) return;
-    } catch {}
+    const ready = await fetch(url).then((response) => response.ok, () => false);
+    if (ready) return;
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
   throw new Error(`A API não respondeu em ${url}`);
@@ -47,7 +47,7 @@ rmSync("tests/allure-results", { recursive: true, force: true });
 const api = spawn("npm run start -w apps/api", {
   shell: true,
   stdio: "ignore",
-  env: { ...process.env, ...tokens, PORT: "3390", DB_PATH: join(tmpdir(), `salabloco-validate-${Date.now()}.json`) },
+  env: { ...process.env, ...tokens, RATE_LIMIT_MAX: "100000", AUTH_FAIL_MAX: "100000", PORT: "3390", DB_PATH: join(tmpdir(), `salabloco-validate-${Date.now()}.json`) },
 });
 
 const results = [];

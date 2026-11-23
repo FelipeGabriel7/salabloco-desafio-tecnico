@@ -16,6 +16,7 @@
     "dev:api": "npm run dev -w apps/api",
     "test": "npm run test -w apps/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint . --max-warnings=0",
     "build": "npm run build --workspaces --if-present",
     "test:api": "npm run test -w apps/api",
     "test:api:redis": "npm run test:redis -w apps/api",
@@ -27,6 +28,11 @@
     "report:open": "npm run report:open -w tests"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "@eslint/js": "^9.39.5",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^15.15.0",
+    "typescript-eslint": "^8.73.0"
   }
 }
