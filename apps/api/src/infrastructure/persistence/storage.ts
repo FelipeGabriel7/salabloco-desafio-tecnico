@@ -11,6 +11,6 @@ export type Storage = {
   snapshot(path: string): Promise<Database>;
 };
 
-export const storage: Storage = config.redis
-  ? createRedisStorage(new Redis(config.redis))
-  : fileStorage;
+export const redis = config.redis ? new Redis(config.redis) : undefined;
+
+export const storage: Storage = redis ? createRedisStorage(redis) : fileStorage;

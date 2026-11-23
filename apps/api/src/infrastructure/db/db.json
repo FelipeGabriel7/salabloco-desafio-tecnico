@@ -40,5 +40,16 @@
       "capacity": 8
     }
   ],
-  "bookings": []
+  "bookings": [
+    {
+      "roomId": "savassi",
+      "startsAt": "2026-11-23T12:00:00.000Z",
+      "endsAt": "2026-11-23T13:00:00.000Z",
+      "title": "Teste",
+      "responsibleEmail": "felipegabfd@gmail.com",
+      "companyId": "acme",
+      "id": "9ec73e14-efe9-4d5f-bdb9-c2f9f0a73e63",
+      "createdAt": "2026-11-22T21:51:04.843Z"
+    }
+  ]
 }

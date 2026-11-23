@@ -1,7 +1,9 @@
 import express from "express";
 import { config } from "./shared/config.ts";
 import { errorHandler, authenticate } from "./shared/middleware.ts";
-import { createRateLimit } from "./shared/rate-limit.ts";
+import { createMemoryRateLimitStore, createRateLimit } from "./shared/rate-limit.ts";
+import { createRedisRateLimitStore } from "./infrastructure/persistence/redis-rate-limit-store.ts";
+import { redis } from "./infrastructure/persistence/storage.ts";
 import { messages } from "./shared/utils/messages.ts";
 import { bookingRoutes } from "./modules/bookings/routes/bookings.routes.ts";
 import { roomRoutes } from "./modules/rooms/rooms.routes.ts";
@@ -11,7 +13,11 @@ export const app = express();
 
 app.disable("x-powered-by");
 app.set("trust proxy", config.trustProxy);
-app.use(createRateLimit(config.rateLimit));
+const rateLimitStore = redis
+  ? createRedisRateLimitStore(redis, config.rateLimit)
+  : createMemoryRateLimitStore(config.rateLimit);
+
+app.use(createRateLimit(rateLimitStore));
 app.use(express.json({
   limit: "16kb"
 }));
