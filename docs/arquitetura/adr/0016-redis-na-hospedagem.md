@@ -33,6 +33,6 @@ Na Vercel a API é uma função serverless: o `/tmp` some quando a função é r
 
 ## Alternativas descartadas
 
-- **Postgres (Neon):** é o destino natural em escala, com transação e constraint de exclusão no banco, mas exigiria reescrever o repository em SQL.
+- **Postgres (Neon):** é o destino natural em escala, com transação e constraint de exclusão no banco, mas exigiria reescrever o repository em SQL. Para o volume deste desafio, o Redis com um documento só resolve com muito menos mudança. Fica como próximo passo se o volume crescer, trocando só a camada de storage.
 - **Vercel Blob:** guarda o arquivo, mas não oferece trava; a concorrência ficaria sem garantia.
 - **Render ou Railway com disco persistente:** um segundo provedor, e ainda uma instância só.

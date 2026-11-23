@@ -241,14 +241,14 @@ Validei em produção: uma reserva criada aparece em 15 leituras simultâneas, o
 4. Gere um token em *Account Settings → Tokens* e cadastre os quatro secrets no GitHub (os IDs ficam em *Settings → General* de cada projeto).
 5. Faça push na `main`.
 
-## O que ainda falta
-
-- Levar os contadores do limite de requisições para o Redis. Hoje ficam em memória, então na Vercel cada instância conta separado ([ADR 0012](docs/arquitetura/adr/0012-limite-de-requisicoes.md)).
-- Se o volume crescer: trocar o Redis por um banco transacional (Postgres com constraint de exclusão), em vez de regravar o banco inteiro a cada escrita.
-
 ## O que ficou de fora
 
-Cadastro de empresas e salas por tela, reservas recorrentes, login com senha e i18n. O extra de Firestore com Emulator não foi implementado. Os tokens são fixos, sem rotação nem revogação; o JSON local atende um único processo e não há trilha de auditoria.
+Cadastro de empresas e salas por tela, reservas recorrentes, login com senha e i18n. O extra de Firestore com Emulator não foi implementado.
+
+Limites que conheço e aceitei para o tamanho deste desafio:
+
+- **Tokens fixos por empresa**, sem rotação, revogação nem trilha de auditoria.
+- **O banco é um documento só.** Cada escrita lê e regrava todos os dados, no arquivo e no Redis. Para algumas centenas de reservas não pesa. Se o volume crescer, o próximo passo é um banco transacional (Postgres com constraint de exclusão), trocando só a camada de storage ([ADR 0016](docs/arquitetura/adr/0016-redis-na-hospedagem.md)).
 
 ## Uso de IA
 
