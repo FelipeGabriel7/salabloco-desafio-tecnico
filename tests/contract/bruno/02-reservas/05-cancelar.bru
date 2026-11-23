@@ -1,7 +1,7 @@
 meta {
-  name: 10 Cancelar reserva (204)
+  name: Cancelar reserva
   type: http
-  seq: 10
+  seq: 5
 }
 
 delete {
@@ -16,8 +16,4 @@ auth:bearer {
 
 assert {
   res.status: eq 204
-}
-
-docs {
-  Usa o id salvo pela requisição 03. Rode a 03 antes.
 }

@@ -1,7 +1,7 @@
 meta {
-  name: 04 Listar reservas da empresa
+  name: Listar reservas da empresa
   type: http
-  seq: 4
+  seq: 2
 }
 
 get {
@@ -20,9 +20,8 @@ assert {
 
 tests {
   test("lista só reservas da própria empresa", function () {
-    expect(res.body).to.be.an("array");
-    res.body.forEach(function (b) {
-      expect(b.companyId).to.equal("acme");
+    res.body.forEach(function (booking) {
+      expect(booking.companyId).to.equal(bru.getEnvVar("companyId"));
     });
   });
 }

@@ -1,0 +1,45 @@
+meta {
+  name: Mesmo horário em conflito
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/companies/{{otherCompanyId}}/bookings
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{otherToken}}
+}
+
+body:json {
+  {
+    "roomId": "{{roomId}}",
+    "startsAt": "{{startsAt}}",
+    "endsAt": "{{endsAt}}",
+    "title": "Deve conflitar",
+    "responsibleEmail": "qa@lumen.example"
+  }
+}
+
+script:pre-request {
+  const t = new Date();
+  t.setUTCDate(t.getUTCDate() + 1);
+  t.setUTCHours(12, 30, 0, 0);
+  bru.setVar("startsAt", t.toISOString());
+  bru.setVar("endsAt", new Date(t.getTime() + 60 * 60 * 1000).toISOString());
+}
+
+assert {
+  res.status: eq 409
+  res.body.code: eq BOOKING_CONFLICT
+}
+
+tests {
+  test("traz sugestões e não expõe a outra empresa", function () {
+    expect(res.body.conflict).to.have.all.keys("startsAt", "endsAt");
+    expect(res.body.suggestions).to.be.an("array");
+  });
+}

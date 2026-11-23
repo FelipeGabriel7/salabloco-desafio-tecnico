@@ -1,7 +1,7 @@
 meta {
-  name: 07 Duração menor que 30 min (422)
+  name: Menos de 30 minutos
   type: http
-  seq: 7
+  seq: 5
 }
 
 post {
@@ -19,20 +19,20 @@ body:json {
     "roomId": "{{roomId}}",
     "startsAt": "{{startsAt}}",
     "endsAt": "{{endsAt}}",
-    "title": "Reunião curta demais",
+    "title": "Curta",
     "responsibleEmail": "ana.souza@acme.com.br"
   }
 }
 
 script:pre-request {
-  // 20 minutos, depois de amanhã, para não colidir com outras reservas.
   const t = new Date();
-  t.setUTCDate(t.getUTCDate() + 2);
+  t.setUTCDate(t.getUTCDate() + 1);
   t.setUTCHours(15, 0, 0, 0);
   bru.setVar("startsAt", t.toISOString());
-  bru.setVar("endsAt", new Date(t.getTime() + 20 * 60 * 1000).toISOString());
+  bru.setVar("endsAt", new Date(t.getTime() + 29 * 60 * 1000).toISOString());
 }
 
 assert {
   res.status: eq 422
+  res.body.code: eq DURATION_TOO_SHORT
 }

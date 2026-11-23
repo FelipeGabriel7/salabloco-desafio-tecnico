@@ -1,7 +1,7 @@
 meta {
-  name: 05 Sobreposição na mesma sala (409)
+  name: Corpo maior que 16 kb
   type: http
-  seq: 5
+  seq: 6
 }
 
 post {
@@ -19,20 +19,21 @@ body:json {
     "roomId": "{{roomId}}",
     "startsAt": "{{startsAt}}",
     "endsAt": "{{endsAt}}",
-    "title": "Deve conflitar com a reserva 03",
+    "title": "{{bigTitle}}",
     "responsibleEmail": "ana.souza@acme.com.br"
   }
 }
 
 script:pre-request {
-  // Mesmo horário da requisição 03. Rode a 03 antes.
   const t = new Date();
   t.setUTCDate(t.getUTCDate() + 1);
-  t.setUTCHours(12, 30, 0, 0);
+  t.setUTCHours(15, 0, 0, 0);
   bru.setVar("startsAt", t.toISOString());
   bru.setVar("endsAt", new Date(t.getTime() + 60 * 60 * 1000).toISOString());
+  bru.setVar("bigTitle", "x".repeat(17 * 1024));
 }
 
 assert {
-  res.status: eq 409
+  res.status: eq 413
+  res.body.code: eq PAYLOAD_TOO_LARGE
 }

@@ -1,0 +1,44 @@
+meta {
+  name: Editar reserva
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/companies/{{companyId}}/bookings/{{bookingId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "roomId": "{{roomId}}",
+    "startsAt": "{{startsAt}}",
+    "endsAt": "{{endsAt}}",
+    "title": "Reunião editada pelo Bruno",
+    "responsibleEmail": "ana.souza@acme.com.br"
+  }
+}
+
+script:pre-request {
+  const t = new Date();
+  t.setUTCDate(t.getUTCDate() + 1);
+  t.setUTCHours(14, 0, 0, 0);
+  bru.setVar("startsAt", t.toISOString());
+  bru.setVar("endsAt", new Date(t.getTime() + 60 * 60 * 1000).toISOString());
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("mantém o id e atualiza o título", function () {
+    expect(res.body.id).to.equal(bru.getVar("bookingId"));
+    expect(res.body.title).to.equal("Reunião editada pelo Bruno");
+  });
+}

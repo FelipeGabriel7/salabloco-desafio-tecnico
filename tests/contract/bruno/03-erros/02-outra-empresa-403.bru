@@ -1,7 +1,7 @@
 meta {
-  name: 09 Token de uma empresa na rota de outra (403)
+  name: Token de outra empresa
   type: http
-  seq: 9
+  seq: 2
 }
 
 get {
@@ -16,4 +16,5 @@ auth:bearer {
 
 assert {
   res.status: eq 403
+  res.body.code: eq FORBIDDEN
 }

@@ -1,0 +1,38 @@
+meta {
+  name: E-mail inválido
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/companies/{{companyId}}/bookings
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "roomId": "{{roomId}}",
+    "startsAt": "{{startsAt}}",
+    "endsAt": "{{endsAt}}",
+    "title": "Validação",
+    "responsibleEmail": "email-invalido"
+  }
+}
+
+script:pre-request {
+  const t = new Date();
+  t.setUTCDate(t.getUTCDate() + 1);
+  t.setUTCHours(15, 0, 0, 0);
+  bru.setVar("startsAt", t.toISOString());
+  bru.setVar("endsAt", new Date(t.getTime() + 60 * 60 * 1000).toISOString());
+}
+
+assert {
+  res.status: eq 400
+  res.body.code: eq VALIDATION
+}

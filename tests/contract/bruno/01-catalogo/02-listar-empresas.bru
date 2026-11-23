@@ -1,0 +1,21 @@
+meta {
+  name: Listar empresas
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/companies
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("devolve id e nome, sem token", function () {
+    expect(res.body[0]).to.have.all.keys("id", "name");
+  });
+}
