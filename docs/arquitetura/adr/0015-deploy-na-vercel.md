@@ -13,7 +13,7 @@ Publico **API e front como dois projetos na Vercel**, e quem publica é o **pipe
 
 - **Ganho:** link público para demonstração, deploy repetível e bloqueado por testes.
 - **Limite:** a função serverless só pode gravar em `/tmp`, que é temporário e separado por instância ([ADR 0007](0007-concorrencia.md)).
-- **Como resolvi:** na Vercel os dados e a trava de escrita ficam num Redis gerenciado, sem mexer em services e controllers ([ADR 0016](0016-redis-na-hospedagem.md)).
+- **Mitigação:** com as credenciais Redis configuradas, dados e trava ficam em Redis compartilhado ([ADR 0016](0016-redis-na-hospedagem.md)). Sem elas, há fallback para `/tmp`. A trava tem TTL de 5 segundos sem renovação e não garante exclusividade se a operação ultrapassar esse prazo; esse limite precisa ser tratado para uma garantia transacional forte.
 
 ## Alternativas descartadas
 
