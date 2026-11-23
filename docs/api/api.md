@@ -30,12 +30,14 @@ A empresa vem **sempre do token**. O `:companyId` da URL só é conferido: se di
   -H "Content-Type: application/json" \
   -d '{
     "roomId": "savassi",
-    "startsAt": "2026-11-21T12:00:00.000Z",
-    "endsAt": "2026-11-21T13:00:00.000Z",
+    "startsAt": "2030-11-21T12:00:00.000Z",
+    "endsAt": "2030-11-21T13:00:00.000Z",
     "title": "Planning semanal",
     "responsibleEmail": "ana.souza@acme.com.br"
   }'
 ```
+
+O exemplo usa uma data fictícia; escolha um horário futuro e livre no fuso do coworking ao executá-lo.
 
 ## Erros
 
