@@ -1,0 +1,53 @@
+config:
+  target: http://127.0.0.1:3333
+  phases:
+    - name: aquecimento
+      duration: 10
+      arrivalRate: 2
+    - name: carga
+      duration: 20
+      arrivalRate: 10
+    - name: pico
+      duration: 10
+      arrivalRate: 25
+  defaults:
+    headers:
+      Authorization: "Bearer {{ $env.ACME_TOKEN }}"
+  plugins:
+    ensure: {}
+    expect: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 300
+      - http.response_time.p99: 600
+    conditions:
+      - expression: vusers.failed == 0
+
+scenarios:
+  - name: Consultar salas e disponibilidade
+    weight: 4
+    flow:
+      - get:
+          url: /api/rooms
+          expect:
+            - statusCode: 200
+      - get:
+          url: /api/rooms/savassi/availability?date=2030-01-15
+          expect:
+            - statusCode: 200
+
+  - name: Disputar o mesmo horário
+    weight: 1
+    flow:
+      - post:
+          url: /api/companies/acme/bookings
+          json:
+            roomId: pampulha
+            startsAt: "2030-01-15T10:00:00-03:00"
+            endsAt: "2030-01-15T11:00:00-03:00"
+            title: Carga
+            responsibleEmail: carga@acme.test
+          expect:
+            - statusCode:
+                - 201
+                - 409
