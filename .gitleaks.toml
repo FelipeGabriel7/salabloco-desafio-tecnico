@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Tokens locais de teste, públicos por definição"
+regexes = [
+  '''(acme|lumen|brisa)-(local|test)-[0-9a-z-]+''',
+]

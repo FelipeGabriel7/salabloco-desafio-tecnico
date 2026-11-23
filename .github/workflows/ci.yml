@@ -1,0 +1,220 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  API_URL: http://127.0.0.1:3333
+
+jobs:
+  unitarios:
+    name: Tipos, unitários e API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run setup
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:api
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-unitarios
+          path: tests/allure-results
+
+  seguranca:
+    name: Segurança (DevSecOps)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Segredos no código e no histórico
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dependências vulneráveis
+        run: npm audit --omit=dev --audit-level=high
+      - name: Nenhum token no bundle do front
+        run: |
+          npm run build -w apps/web
+          ! grep -rqF -e "acme-local" -e "lumen-local" -e "brisa-local" apps/web/dist
+
+  sast:
+    name: Análise estática (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
+
+  contrato:
+    name: Contrato (Bruno)
+    needs: unitarios
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run setup
+      - name: Subir a API
+        run: |
+          DB_PATH="$RUNNER_TEMP/db.json" npm run start -w apps/api &
+          curl -fs --retry 30 --retry-delay 1 --retry-all-errors "$API_URL/api/health"
+      - run: npm run test:contract
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bruno
+          path: tests/reports/bruno.html
+
+  e2e:
+    name: Interface (Playwright)
+    needs: unitarios
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run setup
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-e2e
+          path: tests/allure-results
+
+  performance:
+    name: Performance (Artillery)
+    needs: unitarios
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run setup
+      - name: Subir a API
+        run: |
+          DB_PATH="$RUNNER_TEMP/db.json" npm run start -w apps/api &
+          curl -fs --retry 30 --retry-delay 1 --retry-all-errors "$API_URL/api/health"
+      - run: npm run test:performance
+        env:
+          ACME_TOKEN: acme-local-7f3a9c2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: artillery
+          path: tests/reports/artillery.json
+
+  relatorio:
+    name: Relatório Allure
+    needs: [unitarios, seguranca, sast, contrato, e2e, performance]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: allure-*
+          path: tests/allure-results
+          merge-multiple: true
+      - run: npm run report
+      - uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: tests/allure-report
+      - name: Resumo
+        run: |
+          {
+            echo "## Resultado do pipeline"
+            echo ""
+            echo "| Etapa | Resultado |"
+            echo "| --- | --- |"
+            echo "| Tipos, unitários e API | ${{ needs.unitarios.result }} |"
+            echo "| Segurança (DevSecOps) | ${{ needs.seguranca.result }} |"
+            echo "| Análise estática (CodeQL) | ${{ needs.sast.result }} |"
+            echo "| Contrato (Bruno) | ${{ needs.contrato.result }} |"
+            echo "| Interface (Playwright) | ${{ needs.e2e.result }} |"
+            echo "| Performance (Artillery) | ${{ needs.performance.result }} |"
+            echo ""
+            echo "Relatório completo: artefato **allure-report**."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Falhar se alguma etapa falhou
+        if: contains(needs.*.result, 'failure')
+        run: exit 1
+
+  deploy:
+    name: Deploy na Vercel (${{ matrix.app }})
+    needs: [unitarios, seguranca, sast, contrato, e2e, performance]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      max-parallel: 1
+      matrix:
+        include:
+          - app: api
+            project: VERCEL_PROJECT_ID_API
+          - app: web
+            project: VERCEL_PROJECT_ID_WEB
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets[matrix.project] }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npx vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+        working-directory: apps/${{ matrix.app }}
+      - run: npx vercel@latest build --prod --token="$VERCEL_TOKEN"
+        working-directory: apps/${{ matrix.app }}
+      - run: npx vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        working-directory: apps/${{ matrix.app }}

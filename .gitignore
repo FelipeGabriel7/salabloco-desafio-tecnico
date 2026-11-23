@@ -21,3 +21,6 @@ allure-report/
 
 # Configuração local do Claude Code
 .claude/
+
+# Saídas de teste
+reports/
