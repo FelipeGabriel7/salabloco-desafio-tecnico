@@ -25,14 +25,14 @@ Tudo que vem do navegador é **não confiável**: corpo, query, parâmetros e he
 | A-05 | Vazar dados de terceiros na disponibilidade | Resposta só com `startsAt` e `endsAt`, e só para quem tem token | SEG-04 |
 | A-05b | Consultar catálogos sem credencial | Empresas e salas públicas contêm apenas id/nome/capacidade | SEG-18, SEG-21 |
 | A-05c | Obter configuração sem token | `/api/config` exige token e devolve apenas timezone | SEG-20 |
-| A-06 | Descobrir token por tentativa e erro | Limite de requisições e bloqueio escalonado ([ADR 0012](../arquitetura/adr/0012-limite-de-requisicoes.md)) | SEG-05 |
+| A-06 | Descobrir token por tentativa e erro | **Pendente:** limite de requisições e bloqueio escalonado ([ADR 0012](../arquitetura/adr/0012-limite-de-requisicoes.md)) | SEG-05 planejado |
 | A-07 | Vazar o token pelo tempo de resposta | Trade-off conhecido: comparação simples no desafio; produto real deve usar comparação em tempo constante | SEG-06 |
-| A-08 | Token em log ou erro | Logger oculta `Authorization` | SEG-07 |
+| A-08 | Token em log ou erro | Não há logger de requisição dedicado com redação; evitar registrar tokens | SEG-07 planejado |
 | A-09 | Vazar detalhes internos | 500 genérico, sem stack trace | SEG-08 |
-| A-10 | Esgotar recursos | Limite de corpo (10 kb), tamanho dos campos, limite de requisições | SEG-09 |
+| A-10 | Esgotar recursos | Limite de corpo de 16 KB e tamanho dos campos; rate limit pendente | SEG-09 |
 | A-11 | Injeção por entrada | Validação zod. React escapa por padrão; sem `dangerouslySetInnerHTML` | SEG-10 |
 | A-12 | Chamadas do front para a API no desenvolvimento | Proxy do Vite em `/api`; em produção, servir front e API na mesma origem | SEG-11 |
-| A-13 | Clickjacking, sniffing de tipo | `helmet` e CSP | SEG-12 |
+| A-13 | Clickjacking, sniffing de tipo | `helmet` e CSP não configurados na API; avaliar na hospedagem | SEG-12 planejado |
 | A-14 | Roubo do token no navegador | Token mantido só em memória React; não é salvo no storage do navegador | SEG-13 |
 | A-15 | Tokens no bundle do front | O front não carrega tokens: a pessoa digita ([ADR 0005](../arquitetura/adr/0005-autenticacao.md)) | SEG-14 |
 | A-16 | Dependência vulnerável | `npm audit`, `npm ci` com lockfile, poucas dependências | `npm audit` |

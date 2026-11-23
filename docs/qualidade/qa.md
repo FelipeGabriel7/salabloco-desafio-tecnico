@@ -119,7 +119,7 @@ Segurança: SEG-01 a SEG-17 em [seguranca.md](seguranca.md).
 ## Como cada camada é montada
 
 - **Unitário:** services com repositório em arquivo temporário e relógio fixo. Nomes descrevem comportamento ("recusa reserva com 29 minutos").
-- **API:** servidor real com `DB_PATH` temporário. Cada teste usa sala e horário próprios e limpa o que criou pela API pública. Sem endpoint de reset. Concorrência e limite de requisições rodam isolados. Datas sempre relativas.
+- **API:** Supertest importa o app, usando arquivo temporário nos testes locais; há cenários de concorrência. Rate limit não está implementado. Nos testes E2E, a API iniciada pelo Playwright também usa arquivo temporário quando não reutiliza um servidor existente.
 - **Interface:** Page Objects, seletores por papel e rótulo, sem `waitForTimeout`, login reaproveitado, trace e screenshot das falhas.
 - **Contrato:** `bru run` confere status e formato conforme o OpenAPI.
 - **Mutação:** Stryker altera regras dos services de propósito e confere se algum teste falha. Meta: 80%.

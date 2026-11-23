@@ -4,12 +4,12 @@
 
 Uso **Express 5 com TypeScript** no back-end.
 
-Escolhi o Express porque é o framework que eu domino e consigo explicar linha a linha. Na versão 5, um erro lançado dentro de um handler `async` chega direto ao error handler, então não preciso de `try/catch` em cada controller. Autenticação, validação e limite de requisições ficam como middlewares explícitos, e o fluxo da requisição se lê de cima para baixo.
+Escolhi o Express pela simplicidade e familiaridade. Na versão 5, um erro lançado dentro de um handler `async` chega ao error handler. A autenticação usa middleware e a validação do body de reservas fica no controller; limite de requisições permanece como proposta, não implementado.
 
 ## Consequências
 
 - **Ganho:** o fluxo é simples de ler, e eu consigo manter e explicar tudo o que escrevi.
-- **Custo:** autenticação, validação e limite de requisições são feitos à mão, e o contrato fica por minha conta.
+- **Custo:** autenticação e validação precisam ser implementadas e mantidas na aplicação; limite de requisições ainda é uma pendência.
 - **Risco:** esquecer uma proteção. Mitigo com o [modelo de ameaças](../../qualidade/seguranca.md) como checklist e com testes de segurança (SEG-xx) que falham se uma proteção sumir.
 
 ## Alternativas descartadas
