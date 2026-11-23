@@ -4,18 +4,22 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test:api": "playwright test --project=api",
-    "test:e2e": "playwright test --project=e2e",
-    "test": "playwright test",
-    "typecheck": "tsc --noEmit",
-    "report": "allure generate allure-results --clean -o allure-report"
+    "test:e2e": "playwright test",
+    "test:contract": "node -e \"require('fs').mkdirSync('reports',{recursive:true})\" && cd contract/bruno && bru run -r --env local --reporter-html ../../reports/bruno.html",
+    "test:performance": "node -e \"require('fs').mkdirSync('reports',{recursive:true})\" && artillery run performance/load.yml --output reports/artillery.json",
+    "report": "allure generate allure-results --clean --output allure-report --name Salabloco",
+    "report:open": "allure open allure-report",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.10.2",
-    "allure-commandline": "^2.32.0",
+    "@usebruno/cli": "^2.15.1",
+    "allure": "^3.33.0",
     "allure-playwright": "^3.0.0",
-    "typescript": "^5.7.2"
+    "artillery": "^2.0.34",
+    "typescript": "^5.7.2",
+    "zod": "^4.6.7"
   }
 }
