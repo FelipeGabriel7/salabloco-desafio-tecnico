@@ -57,8 +57,13 @@ export function LoginPage() {
       toast("Login realizado");
     } catch (error) {
 
-      if (error instanceof ApiError && error.status === 401) {
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
         setRequestError("Token inválido para a empresa selecionada.");
+        return;
+      }
+
+      if (error instanceof ApiError && error.status === 429) {
+        setRequestError(error.message);
         return;
       }
 

@@ -19,9 +19,8 @@ test.describe("Funcionalidade: entrar com o token da empresa", () => {
   });
 
   test("Cenário: token de outra empresa explica o motivo", async ({ loginPage }) => {
-    test.fail(true, "Defeito conhecido: o 403 mostra 'Confira se a API está ativa' em vez de token inválido");
     await step("Quando a Acme entra com o token da Lumen", () => loginPage.signIn("acme", env.tokens.lumen));
-    await step("Então vê que o token não é desta empresa", () => loginPage.expectError("Token inválido"));
+    await step("Então vê que o token não é desta empresa", () => loginPage.expectError("Token inválido para a empresa selecionada"));
   });
 
   test("Cenário: formulário vazio", async ({ loginPage }) => {
