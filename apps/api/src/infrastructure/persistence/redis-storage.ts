@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 import type { Database } from "../../shared/types.ts";
@@ -20,15 +21,32 @@ if redis.call("get", KEYS[1]) == ARGV[1] then
 end
 return 0`;
 
+const saveWithLockScript = `
+if redis.call("get", KEYS[1]) == ARGV[1] then
+  redis.call("set", KEYS[2], ARGV[2])
+  return 1
+end
+return 0`;
+
 const emptyDatabase: Database = { companies: [], rooms: [], bookings: [] };
 
 export function createRedisStorage(redis: RedisClient): Storage {
+  const lockOwner = new AsyncLocalStorage<string>();
+
   async function read(): Promise<Database> {
     return (await redis.get<Database>(databaseKey)) ?? structuredClone(emptyDatabase);
   }
 
   async function save(_path: string, database: Database) {
-    await redis.set(databaseKey, database);
+    const owner = lockOwner.getStore();
+
+    if (!owner) {
+      await redis.set(databaseKey, database);
+      return;
+    }
+
+    const saved = await redis.eval(saveWithLockScript, [lockKey, databaseKey], [owner, JSON.stringify(database)]);
+    if (saved !== 1) throw new Error("A trava de escrita expirou antes da gravação.");
   }
 
   async function exclusive<T>(operation: () => Promise<T>): Promise<T> {
@@ -41,7 +59,7 @@ export function createRedisStorage(redis: RedisClient): Storage {
     }
 
     try {
-      return await operation();
+      return await lockOwner.run(owner, operation);
     } finally {
       await redis.eval(releaseScript, [lockKey], [owner]);
     }
