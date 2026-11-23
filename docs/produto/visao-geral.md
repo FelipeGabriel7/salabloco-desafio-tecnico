@@ -10,7 +10,7 @@ Projeto do desafio técnico para desenvolvedor júnior. O enunciado está em [re
 | --- | --- |
 | 5 rotas da API, 5 telas do front, validação | Cadastro de empresas e salas |
 | Controle de acesso entre empresas | Edição ou reagendamento de reserva |
-| Testes de regra, API e interface (Playwright) | Reservas recorrentes |
+| Testes de regra (Vitest), API (Supertest) e interface (Playwright) | Reservas recorrentes |
 | Seed de empresas e salas no JSON | Login com senha ou OAuth |
 | Mapa do dia, conflito com sugestões, tema claro e escuro | |
 

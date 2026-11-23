@@ -7,9 +7,9 @@ Decisão no [ADR 0011](../arquitetura/adr/0011-estrategia-de-testes.md). Aqui: o
 | Nível | Ferramenta | Roda |
 | --- | --- | --- |
 | Unitário | Vitest | Todo push |
-| API | Playwright `request`, contra o servidor real | Todo push |
+| API | Supertest contra o app Express | Todo push |
 | Contrato | Bruno CLI | Todo push |
-| Interface (E2E) | Playwright, só fluxos críticos | Todo push |
+| Interface (E2E) | Playwright, só fluxos críticos no navegador | Todo push |
 | Acessibilidade | axe-core no Playwright | Todo push |
 | Mutação | Stryker nos services | Semanal |
 | Performance | Artillery | Fumaça no PR, completo semanal |
@@ -73,7 +73,12 @@ Nível: **U** unitário, **A** API, **E** interface.
 
 | ID | Cenário | Esperado |
 | --- | --- | --- |
-| CA-17 | Sem token ou token desconhecido, em **qualquer** rota (inclusive `/rooms` e disponibilidade) | 401 |
+| CA-17 | Sem token ou token desconhecido na disponibilidade e nas rotas de reservas | 401 |
+| CA-23 | Listar salas sem token | 200 |
+| CA-27 | `GET /api/companies` sem token | 200 com empresas do seed |
+| CA-28 | `GET /api/config` sem token/com token válido | 401/200 com timezone |
+| CA-29 | PUT de reserva própria / id de outra empresa | 200/404; reserva alheia intacta |
+| CA-30 | PUT para intervalo já ocupado | 409; reserva original intacta |
 | CA-18 | Token da Acme na rota da Lumen | 403 |
 | CA-19 | Cancelar reserva própria | 204 |
 | CA-20 | Cancelar reserva de outra empresa, ou inexistente | 404, corpo idêntico |

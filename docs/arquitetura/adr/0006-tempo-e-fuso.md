@@ -10,7 +10,7 @@ Trato o tempo com rigor, porque quase todo bug de reserva é bug de tempo.
 4. **Expediente das 07:00 às 22:00** como regra de negócio (`OUTSIDE_OPENING_HOURS`, 422). Por isso nenhuma reserva cruza a meia-noite.
 5. **Intervalo semiaberto** `[início, fim)`: reservas coladas (10:00–11:00 e 11:00–12:00) não conflitam.
 
-`GET /rooms/:id/availability?date=` devolve toda reserva que se sobrepõe ao dia local, de 00:00 a 24:00 no fuso do coworking.
+`GET /api/rooms/:id/availability?date=` devolve toda reserva que se sobrepõe ao dia local, de 00:00 a 24:00 no fuso do coworking.
 
 ### Por que `Intl` e não `-03:00`
 
@@ -33,4 +33,4 @@ O `Date` do JavaScript corrige datas impossíveis e lê strings sem fuso no fuso
 
 - **Ganho:** o cálculo fica correto em qualquer época e em outras regiões, por configuração, e a entrada ambígua é barrada na borda.
 - **Custo:** calcular o início do dia é mais elaborado que somar `-3h`, e o front precisa enviar fuso explícito.
-- **Pendência:** o front ainda usa o offset fixo (`apps/web/src/utils/time.ts`) e deve migrar para `Intl`.
+- **Front-end:** lê `COWORKING_TIMEZONE` pelo endpoint autenticado `/api/config` e converte para ISO na função `apps/web/src/services/time.ts`.

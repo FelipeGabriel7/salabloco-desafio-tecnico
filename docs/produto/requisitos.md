@@ -4,14 +4,16 @@
 
 | ID | Requisito | Aceite |
 | --- | --- | --- |
-| RF-01 | Escolher a empresa e informar o token | Token certo entra. Errado mostra erro |
-| RF-02 | Listar as salas | Nome e capacidade, só com token |
+| RF-01 | Carregar empresas da API, escolher a empresa e informar token | Token certo entra. Errado mostra erro |
+| RF-02 | Listar as salas | Nome e capacidade, sem token |
 | RF-03 | Ver os horários ocupados de uma sala em um dia | Só com token. Só `startsAt` e `endsAt` |
 | RF-04 | Criar reserva | 201 com a reserva. Erros por campo |
 | RF-05 | Listar as reservas da empresa | Só as da empresa do token |
 | RF-06 | Cancelar reserva | 204. Reserva alheia ou inexistente: 404 |
-| RF-07 | Mapa do dia com todas as salas | Clicar num horário livre abre o formulário preenchido |
+| RF-07 | Mapa do dia com todas as salas | Reservar numa sala abre o formulário com sala/data |
 | RF-08 | Sugestões quando há conflito | O 409 traz horários e salas alternativos |
+| RF-09 | Editar uma reserva própria | 200 com os campos atualizados; conflitos e regras são validados novamente |
+| RF-10 | Carregar catálogo de empresas para login | A lista vem da API, sem ids/names hard-coded no front |
 
 ## Regras de negócio
 
@@ -39,9 +41,9 @@
 
 ## O que o desafio pede
 
-**API:** `GET /rooms`, `POST /companies/:companyId/bookings`, `GET /companies/:companyId/bookings`, `DELETE /companies/:companyId/bookings/:id`, `GET /rooms/:id/availability?date=AAAA-MM-DD`. Cada empresa tem um token fixo, enviado em header. O enunciado trata empresas e salas como fixas; no projeto elas são dados de seed que o back-end insere no JSON.
+**API:** `GET /api/health`, `GET /api/companies`, `GET /api/rooms`, `GET /api/config`, disponibilidade e CRUD de reservas em `/api/companies/:companyId/bookings`. Cada empresa tem token fixo, enviado no header. Catálogos e configuração vêm do back-end; o front não embute dados de empresa/sala nem timezone.
 
-**Front:** escolher a empresa, criar reserva com validação, listar com cancelar, ver disponibilidade de uma sala em um dia, estados de carregando, erro e vazio.
+**Front:** carregar empresas/salas da API, login com token, criar/editar/listar/cancelar reserva, ver disponibilidade e mostrar estados de carregando, erro e vazio.
 
 **Entrega:** repositório com commits pequenos e README (como rodar e testar, decisões, o que ficou de fora, uso de IA). Prazo: 24/11/2026.
 
@@ -51,7 +53,7 @@
 
 | Ponto | Decisão | ADR |
 | --- | --- | --- |
-| `GET /rooms` e disponibilidade exigem token? | Sim, de qualquer empresa. Nenhuma rota é pública | [0005](../arquitetura/adr/0005-autenticacao.md) |
+| `GET /api/rooms` exige token? | Não. Catálogo público. Disponibilidade continua exigindo token | [0005](../arquitetura/adr/0005-autenticacao.md) |
 | Empresas e salas | Seed do back-end no JSON usado como banco | [0003](../arquitetura/adr/0003-persistencia.md) |
 | Fuso | `America/Sao_Paulo` com `Intl`, sem offset fixo | [0006](../arquitetura/adr/0006-tempo-e-fuso.md) |
 | Expediente | 07:00 às 22:00, decisão de negócio | [0006](../arquitetura/adr/0006-tempo-e-fuso.md) |

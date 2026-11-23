@@ -1,25 +1,29 @@
 # API
 
-Contrato formal em [openapi.yaml](openapi.yaml).
+Contrato formal em [openapi.yaml](openapi.yaml). Requisições de exemplo na coleção Bruno (`tests/contract/bruno`).
 
 ## Rotas
 
 | Rota | Autenticação | Sucesso | Erros |
 | --- | --- | --- | --- |
-| `GET /rooms` | Bearer (qualquer empresa) | 200 | 401, 429 |
-| `GET /rooms/:id/availability?date=AAAA-MM-DD` | Bearer (qualquer empresa) | 200 | 400, 401, 404, 429 |
-| `GET /companies/:companyId/bookings` | Bearer | 200 | 401, 403, 429 |
-| `POST /companies/:companyId/bookings` | Bearer | 201 | 400, 401, 403, 409, 422, 429 |
-| `DELETE /companies/:companyId/bookings/:id` | Bearer | 204 | 401, 403, 404, 429 |
+| `GET /api/health` | Nenhuma | 200 | - |
+| `GET /api/companies` | Nenhuma | 200 | - |
+| `GET /api/config` | Bearer (qualquer empresa) | 200 | 401 |
+| `GET /api/rooms` | Nenhuma | 200 | - |
+| `GET /api/rooms/:id/availability?date=AAAA-MM-DD` | Bearer (qualquer empresa) | 200 | 400, 401, 404, 429 |
+| `GET /api/companies/:companyId/bookings` | Bearer | 200 | 401, 403, 429 |
+| `POST /api/companies/:companyId/bookings` | Bearer | 201 | 400, 401, 403, 409, 422, 429 |
+| `PUT /api/companies/:companyId/bookings/:id` | Bearer | 200 | 400, 401, 403, 404, 409, 422, 429 |
+| `DELETE /api/companies/:companyId/bookings/:id` | Bearer | 204 | 401, 403, 404, 429 |
 
-**Todas as rotas exigem token.** As rotas de salas aceitam o token de qualquer empresa; as de reservas exigem o token da empresa do `:companyId`.
+`/api/health`, `GET /api/companies` e `GET /api/rooms` são públicos. `GET /api/config` devolve apenas o fuso configurado e exige token. Disponibilidade exige qualquer token; as rotas de reservas exigem o token da empresa do `:companyId`.
 
 A empresa vem **sempre do token**. O `:companyId` da URL só é conferido: se divergir, 403. O `companyId` nunca vai no corpo.
 
 ## Exemplo
 
 ```bash
-curl -i -X POST http://localhost:3333/companies/acme/bookings \
+  curl -i -X POST http://localhost:3333/api/companies/acme/bookings \
   -H "Authorization: Bearer <token da empresa>" \
   -H "Content-Type: application/json" \
   -d '{

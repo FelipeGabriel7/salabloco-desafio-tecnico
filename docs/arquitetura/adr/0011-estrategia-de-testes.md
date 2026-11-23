@@ -1,43 +1,40 @@
 # ADR 0011. Estratégia de testes
 
-O plano de execução está em [qa.md](../../qualidade/qa.md).
-
 ## Decisão
 
-Testo cada regra **no nível mais baixo em que dá para prová-la**. "29 minutos é recusado" é teste unitário, o 422 na rota é teste de API, e a mensagem no campo certo é teste de interface.
+Sigo a **pirâmide de testes** e testo cada regra **no nível mais baixo em que dá para prová-la**. "29 minutos é recusado" é teste de API; a mensagem aparecer no campo certo é teste de interface.
 
 | Camada | Ferramenta | O que prova |
 | --- | --- | --- |
-| Unitário | Vitest | Regras e bordas dos services e utilitários, sem rede |
-| API | Playwright (`request`) | Rotas, autenticação, validação, erros, concorrência e privacidade, contra o servidor real |
-| Interface | Playwright | Só os fluxos críticos |
-| Acessibilidade | axe-core | Violações nas telas principais |
-| Contrato | Bruno CLI | A API responde como o OpenAPI descreve |
-| Segurança | Testes SEG-xx e `npm audit` | Controles do [modelo de ameaças](../../qualidade/seguranca.md) |
-| Performance | Artillery | Carga e limite de requisições |
-| Mutação | Stryker nos services | Os testes falham de verdade quando a regra quebra |
-| Relatório | Allure, trace e screenshot | Resultado legível e diagnóstico de falhas |
+| Unidade | Vitest | Fuso, expediente, sobreposição, esquemas do formulário |
+| API | Vitest + Supertest | Rotas, regras com as duas bordas, isolamento entre empresas, concorrência |
+| Contrato | zod nos testes da API e Bruno | Cada resposta tem exatamente o formato combinado |
+| Interface | Playwright | Fluxos críticos, usabilidade, isolamento visto na tela |
+| Acessibilidade | axe-core | Nenhuma violação grave nas telas principais |
+| Performance | Artillery | p95 e p99 sob carga, e um único 201 quando muitos disputam o mesmo horário |
+| Segurança | gitleaks, `npm audit`, CodeQL | Segredos, dependências vulneráveis e falhas no código |
+| Relatório | Allure | Um relatório só, com screenshot de cada teste de interface e vídeo e trace das falhas |
 
-### Playwright para a API, em vez de supertest
+### Como escrevo os testes de interface
 
-Escolhi o Playwright pela fidelidade, porque testo o servidor como ele roda, por HTTP, e por usar uma ferramenta só, com um único relatório. O custo é ser mais lento e compartilhar estado entre os testes. Para isolar:
+- **BDD:** cada teste é um cenário com passos **Dado / Quando / Então** (`test.step`), que aparecem no relatório.
+- **Page Objects:** os specs só falam com páginas (`tests/pages`). Nenhum seletor fica no spec.
+- **Seletores estáveis:** por papel e rótulo acessível (`getByRole`, `getByLabel`), nunca por classe CSS.
+- **Auto-healing:** cada elemento tem um seletor alternativo (`locator.or`), usado se o principal deixar de existir.
+- **Sem flaky:** banco temporário, dados criados e apagados pela API em cada teste, datas relativas, nenhum `sleep` e um worker só.
 
-- cada execução usa um arquivo de dados temporário (`DB_PATH`);
-- cada teste usa sala e horário próprios e limpa o que criou pela API pública;
-- não existe endpoint de reset;
-- os testes de concorrência e de limite rodam isolados.
+### Supertest em vez de Playwright para a API
 
-O supertest seria mais rápido e criaria um app novo por teste, mas executa dentro do processo e exigiria uma segunda ferramenta.
-
-### Princípios
-
-1. Determinismo: relógio injetado e nenhum `sleep`.
-2. Os nomes descrevem comportamento.
-3. Cada caso de aceite (CA-xx) aponta para o teste que o prova.
-4. Testo o que dá errado antes do que dá certo: cada regra tem a borda dos dois lados.
+Supertest chama o `app` do Express direto, sem abrir porta, e deixa fixar o relógio. Fica rápido o bastante para cobrir todas as bordas. Playwright fica só para o que precisa de navegador.
 
 ## Consequências
 
-- **Risco:** o limite de requisições (429) bloquearia os próprios testes. Os limites são configuráveis: altos nos testes normais, baixos e isolados nos testes do 429 ([ADR 0012](0012-limite-de-requisicoes.md)).
-- **Risco:** teste de carga é lento e instável, então rodo o Artillery separado.
-- **Escopo:** é maior que o do enunciado. O [backlog](../../produto/backlog.md) define as prioridades, e não corto os testes de regra, de acesso entre empresas e o README.
+- **Ganho:** a maioria dos testes roda em segundos, e o navegador cobre só os fluxos que o usuário vê.
+- **Custo:** os testes da API configuram o ambiente antes de importar o `app`, porque `config.ts` lê o ambiente na importação.
+- **Defeito conhecido em teste:** um cenário marcado como falha esperada (`test.fail`) avisa quando o defeito for corrigido.
+
+## Alternativas descartadas
+
+- **Playwright `request` para a API:** mais lento e sem controle do relógio.
+- **Cucumber com arquivos `.feature`:** mais uma camada de configuração; os passos em `test.step` dão a mesma leitura.
+- **Stryker (mutação):** fica para depois do prazo.

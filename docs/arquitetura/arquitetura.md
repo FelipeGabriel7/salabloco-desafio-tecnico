@@ -7,7 +7,7 @@ salabloco/
 ├─ apps/
 │  ├─ web/     React + Vite + TypeScript + Tailwind
 │  └─ api/     Node + TypeScript + Express 5
-├─ tests/      Playwright (API e E2E), Bruno (contrato), Artillery (performance)
+├─ tests/      Supertest (API), Playwright (E2E), Bruno (contrato), Artillery (performance)
 └─ docs/
 ```
 
@@ -63,11 +63,13 @@ apps/web/src/
 ├─ contexts/     sessão e tema (Context API)
 ├─ hooks/        useAsync
 ├─ pages/        telas
-├─ services/     cliente HTTP, cliente simulado (mock) e contrato
-├─ utils/        regras puras (duração, expediente, fuso), esquemas zod, URLs, helpers
+├─ services/     funções Axios, tipos da API e conversão de horário
+├─ routes.ts     paths React e prefill de navegação
 ├─ App.tsx       provedores e rotas
 └─ main.tsx
 ```
+
+Testes unitários do front ficam em `apps/web/tests/`, separados de `src/`.
 
 ## Fluxo de uma requisição
 
@@ -77,7 +79,7 @@ sequenceDiagram
   participant M as Middlewares
   participant S as BookingsService
   participant P as Repository
-  C->>M: POST /companies/acme/bookings
+  C->>M: POST /api/companies/acme/bookings
   M->>M: limite (429), autenticação (401), :companyId (403), validação (400)
   M->>S: create(empresa do token, dados)
   S->>S: regras (422)

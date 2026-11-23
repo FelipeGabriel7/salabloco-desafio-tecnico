@@ -42,6 +42,7 @@ docs/
 | [0012](arquitetura/adr/0012-limite-de-requisicoes.md) | Limite de requisições (429) |
 | [0013](arquitetura/adr/0013-configuracao-e-segredos.md) | Configuração e segredos: `.env` e `.env.example` |
 | [0014](arquitetura/adr/0014-enums-e-interfaces.md) | Enums e interfaces como contrato de tipos |
+| [0015](arquitetura/adr/0015-deploy-na-vercel.md) | Deploy na Vercel, pelo pipeline |
 
 ## API
 

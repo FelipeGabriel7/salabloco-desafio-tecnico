@@ -9,7 +9,7 @@ salabloco/
 ├─ apps/
 │  ├─ web/        front-end (React)
 │  └─ api/        servidor Node.js (Express)
-├─ tests/         Playwright (API e interface), Bruno (contrato), Artillery (performance)
+├─ tests/         Supertest (API), Playwright (interface), Bruno (contrato), Artillery
 ├─ docs/
 ├─ package.json   workspaces
 └─ package-lock.json
@@ -20,9 +20,8 @@ O `package.json` da raiz declara `"workspaces": ["apps/*", "tests"]`, e um `npm 
 | Script na raiz | O que faz |
 | --- | --- |
 | `npm run dev` | Sobe api e web juntos |
-| `npm run dev:mock` | Sobe só o web com a API simulada |
 | `npm test` | Testes unitários (Vitest) |
-| `npm run test:api` | Testes de API (Playwright) |
+| `npm run test:api` | Specs Supertest no projeto API do runner Playwright |
 | `npm run test:e2e` | Testes de interface (Playwright) |
 | `npm run typecheck` e `npm run build` | Em todos os pacotes |
 

@@ -9,17 +9,52 @@ info:
 servers:
   - url: http://localhost:3333
 tags:
+  - name: Sistema
+    description: Verificação de disponibilidade da API
   - name: Salas
-    description: Exigem o token de qualquer empresa. Sem token, 401.
+    description: O catálogo é público; disponibilidade exige o token de qualquer empresa.
+  - name: Empresas
+    description: Catálogo público de empresas para o login.
   - name: Reservas
     description: Exigem o token da empresa do :companyId.
 paths:
-  /rooms:
+  /api/health:
+    get:
+      tags: [Sistema]
+      summary: Verifica se a API está ativa
+      operationId: healthCheck
+      responses:
+        '200':
+          description: API ativa
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, enum: [ok] }
+  /api/config:
+    get:
+      tags: [Sistema]
+      summary: Lê a configuração pública necessária para exibir horários
+      operationId: getAppConfig
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Configuração de fuso do coworking
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [timezone]
+                properties:
+                  timezone: { type: string, example: America/Sao_Paulo }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/rooms:
     get:
       tags: [Salas]
       summary: Lista as salas
       operationId: listRooms
-      security: [{ bearerAuth: [] }]
       responses:
         '200':
           description: Lista de salas
@@ -28,8 +63,20 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Room' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-  /rooms/{id}/availability:
+  /api/companies:
+    get:
+      tags: [Empresas]
+      summary: Lista empresas disponíveis para login
+      operationId: listCompanies
+      responses:
+        '200':
+          description: Lista de empresas sem credenciais
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Company' }
+  /api/rooms/{id}/availability:
     get:
       tags: [Salas]
       summary: Horários ocupados de uma sala em um dia
@@ -57,7 +104,7 @@ paths:
         '400': { $ref: '#/components/responses/InvalidDate' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
-  /companies/{companyId}/bookings:
+  /api/companies/{companyId}/bookings:
     parameters:
       - $ref: '#/components/parameters/CompanyId'
     get:
@@ -102,7 +149,37 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/RuleViolation' }
         '429': { $ref: '#/components/responses/RateLimited' }
-  /companies/{companyId}/bookings/{id}:
+  /api/companies/{companyId}/bookings/{id}:
+    put:
+      tags: [Reservas]
+      summary: Substitui os dados de uma reserva
+      description: Reenvia todos os campos da reserva. Uma reserva de outra empresa responde 404.
+      operationId: updateBooking
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CompanyId'
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewBooking' }
+      responses:
+        '200':
+          description: Reserva atualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '400': { $ref: '#/components/responses/Validation' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/RuleViolation' }
+        '429': { $ref: '#/components/responses/RateLimited' }
     delete:
       tags: [Reservas]
       summary: Cancela uma reserva da empresa
@@ -134,6 +211,12 @@ components:
       required: true
       schema: { type: string, example: acme }
   schemas:
+    Company:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, example: acme }
+        name: { type: string, example: Acme Tecnologia }
     Room:
       type: object
       required: [id, name, capacity]

@@ -4,20 +4,20 @@ Aplicação de **reserva de salas de reunião de um coworking**. Várias empresa
 
 Este é o meu desafio técnico para desenvolvedor júnior: API em Node.js + TypeScript, front-end em React + TypeScript, testes automatizados e documentação das minhas decisões.
 
-> **Estado atual:** o front-end roda de ponta a ponta com uma API simulada no navegador. A API real (`apps/api`) e os testes automatizados (`tests/`) ainda estão em construção. Esta seção será atualizada conforme cada parte ficar pronta.
+> **Estado atual:** a API Express e o front React estão ligados e cobertos por testes de unidade, API, contrato, interface, acessibilidade e performance, todos rodando no CI.
 
 ## Como rodar
 
 Requisito: **Node 22 ou mais novo**.
 
 ```bash
-npm install
+npm ci
 npm run setup       # cria os .env a partir dos .env.example (não sobrescreve)
-npm run dev:mock    # front-end com a API simulada, em http://127.0.0.1:5181
-npm test            # testes unitários
+npm run dev         # API em :3333 e front em :5181
+npm run validate    # roda todas as validações e gera o relatório Allure
 ```
 
-No login, escolha a empresa e informe o token. Os tokens de demonstração aparecem na própria tela (só no modo simulado). O `.env` nunca vai para o git e nenhum segredo fica no código ([ADR 0013](docs/arquitetura/adr/0013-configuracao-e-segredos.md)).
+No login, escolha a empresa e informe o token configurado em `apps/api/.env`. O front usa Axios e encaminha `/api` pelo proxy do Vite. O `.env` nunca vai para o git e nenhum token fica no código ([ADR 0013](docs/arquitetura/adr/0013-configuracao-e-segredos.md)).
 
 ## O que o sistema faz
 
@@ -46,15 +46,19 @@ O back-end insere no arquivo JSON as empresas **Acme**, **Lumen** e **Brisa** e 
 
 ## API
 
-Todas as rotas exigem `Authorization: Bearer <token>`. Nenhuma é pública.
+`GET /api/health`, `GET /api/companies` e `GET /api/rooms` são públicos. `/api/config` e as demais rotas de negócio exigem `Authorization: Bearer <token>`.
 
 | Rota | Faz |
 | --- | --- |
-| `GET /rooms` | Lista as salas |
-| `GET /rooms/:id/availability?date=AAAA-MM-DD` | Horários ocupados da sala no dia |
-| `GET /companies/:companyId/bookings` | Reservas da empresa |
-| `POST /companies/:companyId/bookings` | Cria uma reserva |
-| `DELETE /companies/:companyId/bookings/:id` | Cancela uma reserva |
+| `GET /api/health` | Verifica se a API está ativa (público) |
+| `GET /api/companies` | Lista empresas para o seletor de login (público) |
+| `GET /api/config` | Informa o fuso configurado (com token) |
+| `GET /api/rooms` | Lista as salas |
+| `GET /api/rooms/:id/availability?date=AAAA-MM-DD` | Horários ocupados da sala no dia |
+| `GET /api/companies/:companyId/bookings` | Reservas da empresa |
+| `POST /api/companies/:companyId/bookings` | Cria uma reserva |
+| `PUT /api/companies/:companyId/bookings/:id` | Edita uma reserva própria |
+| `DELETE /api/companies/:companyId/bookings/:id` | Cancela uma reserva |
 
 A empresa vem sempre do token. Os erros seguem o formato `{ code, message, field? }`, e o `code` é o contrato. Detalhes em [API](docs/api/api.md) e no [OpenAPI](docs/api/openapi.yaml).
 
@@ -62,9 +66,11 @@ A empresa vem sempre do token. Os erros seguem o formato `{ code, message, field
 
 ```
 apps/web/     front-end (React, Vite, TypeScript, Tailwind)
-apps/api/     servidor (Express 5, TypeScript)           [em construção]
-tests/        Playwright, Bruno e Artillery              [esqueleto]
+apps/api/     servidor (Express 5, TypeScript)
+tests/        Playwright (e2e, pages, fixtures), Bruno (contract) e Artillery (performance)
+scripts/      setup dos .env e validação local completa
 docs/         produto, arquitetura (ADRs), API, qualidade, design
+.github/      pipeline de CI/CD
 ```
 
 Um repositório só, com npm workspaces ([ADR 0009](docs/arquitetura/adr/0009-monorepo.md)).
@@ -84,27 +90,61 @@ Cada decisão tem um ADR com o motivo, as consequências e as alternativas que d
 | Escrita em fila, com a checagem de conflito dentro | Duas empresas nunca reservam a mesma sala | [0007](docs/arquitetura/adr/0007-concorrencia.md) |
 | Nenhum segredo no código | `.env` fora do git e `.env.example` versionado | [0013](docs/arquitetura/adr/0013-configuracao-e-segredos.md) |
 
-A lista completa dos 14 ADRs está em [docs/](docs/README.md).
+A lista completa dos 15 ADRs está em [docs/](docs/README.md).
 
 ## Testes
 
-Estratégia em [qualidade](docs/qualidade/qa.md) e [segurança](docs/qualidade/seguranca.md):
+Sigo a pirâmide de testes: muitos testes rápidos na base e poucos no navegador ([ADR 0011](docs/arquitetura/adr/0011-estrategia-de-testes.md)).
 
-- **Vitest:** regras de negócio e utilitários (já rodam com `npm test`).
-- **Playwright:** API e fluxos críticos da interface, mais acessibilidade com axe.
-- **Bruno:** contrato da API.
-- **Artillery:** carga e limite de requisições.
+| Camada | Ferramenta | Onde | Comando |
+| --- | --- | --- | --- |
+| Unidade do front | Vitest | `apps/web/tests` | `npm test` |
+| Unidade, integração e contrato da API | Vitest + Supertest, contratos com zod | `apps/api/tests/{unit,integration,contract}` | `npm run test:api` |
+| Contrato de ponta a ponta | Bruno (catálogo, reservas, erros) | `tests/contract/bruno` | `npm run test:contract` |
+| Interface | Playwright (BDD, Page Objects, axe) | `tests/e2e`, `tests/pages` | `npm run test:e2e` |
+| Performance | Artillery | `tests/performance` | `npm run test:performance` |
+
+- `npm run validate` sobe uma API própria com banco temporário, roda todas as camadas, mostra uma tabela de passou/falhou e gera o relatório.
+- `npm run report:open` abre o **Allure** com os testes da API e da interface. Cada teste de interface tem screenshot; vídeo e trace só quando falha. O Bruno gera o próprio relatório em `tests/reports/bruno.html` e o Artillery em `tests/reports/artillery.json`.
+- Contrato e performance precisam da API rodando (`npm run dev:api`); o `validate` já cuida disso.
+
+## CI/CD
+
+O pipeline fica em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) e roda em todo push e pull request para a `main`.
+
+| Etapa | O que garante |
+| --- | --- |
+| Tipos, unitários e API | `typecheck`, Vitest do front e da API, build |
+| Segurança (DevSecOps) | gitleaks (segredos), `npm audit` (dependências), nenhum token no bundle |
+| Análise estática | CodeQL |
+| Contrato | Coleção Bruno contra a API rodando |
+| Interface | Playwright no Chromium |
+| Performance | Artillery com limites de p95 e p99 |
+| Relatório | Allure consolidado e resumo de cada etapa na página da execução |
+| Deploy | Só na `main`, só com tudo verde: publica API e front na Vercel |
+
+## Deploy na Vercel
+
+São dois projetos na Vercel, um para a API e outro para o front, publicados pelo pipeline depois que todas as etapas passam.
+
+1. Crie o projeto **salabloco-api** com *Root Directory* `apps/api`. Em *Environment Variables*, defina `COMPANY_ACME_TOKEN`, `COMPANY_LUMEN_TOKEN`, `COMPANY_BRISA_TOKEN` (valores novos e longos), `COWORKING_TIMEZONE=America/Sao_Paulo` e `DB_PATH=/tmp/db.json`.
+2. Crie o projeto **salabloco-web** com *Root Directory* `apps/web`. Se a URL da API não for `https://salabloco-api.vercel.app`, ajuste o `rewrites` em [`apps/web/vercel.json`](apps/web/vercel.json). O front chama `/api` no próprio domínio e a Vercel encaminha para a API, sem CORS.
+3. Em *Settings → Tokens* da Vercel, gere um token. No GitHub, em *Settings → Secrets and variables → Actions*, crie `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_API` e `VERCEL_PROJECT_ID_WEB` (os IDs ficam em *Settings → General* de cada projeto).
+4. Faça push na `main`. O deploy automático pelo Git da Vercel fica desligado (`git.deploymentEnabled: false`): quem publica é o pipeline, e só depois dos testes.
+
+**Limite importante:** na Vercel a API roda como função serverless, e o disco (`/tmp`) é temporário. As reservas somem quando a função é reciclada, e cada instância tem a própria fila de escrita. Serve para demonstração. Para guardar dados de verdade, a migração é trocar o repository por um banco ([ADR 0003](docs/arquitetura/adr/0003-persistencia.md), [ADR 0015](docs/arquitetura/adr/0015-deploy-na-vercel.md)).
 
 ## O que ainda falta
 
-- API real, com seed, fila de escrita e limite de requisições.
-- Ligar o front à API real e remover o cálculo de sugestões do navegador.
-- Testes de API e de interface com Playwright.
+- No login, token de outra empresa (403) mostra "Confira se a API está ativa" em vez de "token inválido".
+- Limite de requisições (429) e comparação de token com `timingSafeEqual`.
 - Revisar a agenda de seleção de horário.
+
+Os itens com teste já escrito aparecem no relatório como pendentes ou como falha esperada.
 
 ## O que ficou de fora
 
-Cadastro de empresas e salas por tela, edição ou reagendamento de reservas, reservas recorrentes e login com senha. Limites que já conheço: os tokens são fixos, sem rotação nem revogação; a persistência em arquivo vale para um único processo; não há trilha de auditoria. O HTTPS é obrigatório em qualquer ambiente publicado e fica a cargo de quem publica.
+Cadastro de empresas e salas por tela, reservas recorrentes e login com senha. Limites que já conheço: os tokens são fixos, sem rotação nem revogação; a persistência em arquivo vale para um único processo; não há trilha de auditoria. O HTTPS é obrigatório em qualquer ambiente publicado e fica a cargo de quem publica.
 
 ## Uso de IA
 

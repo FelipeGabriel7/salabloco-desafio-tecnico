@@ -17,20 +17,21 @@ Tudo que vem do navegador é **não confiável**: corpo, query, parâmetros e he
 | ID | Ameaça | Controle | Teste |
 | --- | --- | --- | --- |
 | A-01 | Acessar reservas de outra empresa trocando o `:companyId` | `:companyId` conferido contra a empresa do token: 403 | SEG-01 |
-| A-02 | Apagar reserva de outra empresa (BOLA) | Busca por `id` **e** `companyId`. Não achou: 404, igual a inexistente | SEG-02 |
+| A-02 | Apagar/editar reserva de outra empresa (BOLA) | Busca por `id` **e** `companyId`. Não achou: 404, igual a inexistente | SEG-02, SEG-22 |
 | A-03 | Descobrir que um id existe | 404 nos dois casos. Ids são UUID | SEG-02 |
 | A-04 | Reservar em nome de outra empresa | `companyId` no corpo é recusado (`strict`). A empresa vem do token | SEG-03 |
 | A-05 | Vazar dados de terceiros na disponibilidade | Resposta só com `startsAt` e `endsAt`, e só para quem tem token | SEG-04 |
-| A-05b | Ver salas e ocupação sem credencial | `/rooms` e disponibilidade exigem token de qualquer empresa | SEG-18 |
+| A-05b | Consultar catálogos sem credencial | Empresas e salas públicas contêm apenas id/nome/capacidade | SEG-18, SEG-21 |
+| A-05c | Obter configuração sem token | `/api/config` exige token e devolve apenas timezone | SEG-20 |
 | A-06 | Descobrir token por tentativa e erro | Limite de requisições e bloqueio escalonado ([ADR 0012](../arquitetura/adr/0012-limite-de-requisicoes.md)) | SEG-05 |
-| A-07 | Vazar o token pelo tempo de resposta | Hash SHA-256 e `timingSafeEqual` | SEG-06 |
+| A-07 | Vazar o token pelo tempo de resposta | Trade-off conhecido: comparação simples no desafio; produto real deve usar comparação em tempo constante | SEG-06 |
 | A-08 | Token em log ou erro | Logger oculta `Authorization` | SEG-07 |
 | A-09 | Vazar detalhes internos | 500 genérico, sem stack trace | SEG-08 |
 | A-10 | Esgotar recursos | Limite de corpo (10 kb), tamanho dos campos, limite de requisições | SEG-09 |
 | A-11 | Injeção por entrada | Validação zod. React escapa por padrão; sem `dangerouslySetInnerHTML` | SEG-10 |
-| A-12 | Origem não autorizada chamando a API | CORS com lista de origens | SEG-11 |
+| A-12 | Chamadas do front para a API no desenvolvimento | Proxy do Vite em `/api`; em produção, servir front e API na mesma origem | SEG-11 |
 | A-13 | Clickjacking, sniffing de tipo | `helmet` e CSP | SEG-12 |
-| A-14 | Roubo do token no navegador | `sessionStorage`, CSP, sem HTML dinâmico | SEG-13 |
+| A-14 | Roubo do token no navegador | Token mantido só em memória React; não é salvo no storage do navegador | SEG-13 |
 | A-15 | Tokens no bundle do front | O front não carrega tokens: a pessoa digita ([ADR 0005](../arquitetura/adr/0005-autenticacao.md)) | SEG-14 |
 | A-16 | Dependência vulnerável | `npm audit`, `npm ci` com lockfile, poucas dependências | `npm audit` |
 | A-17 | Segredo no repositório | Tudo vem do ambiente. `.env` fora do git ([ADR 0013](../arquitetura/adr/0013-configuracao-e-segredos.md)) | SEG-17 |
@@ -67,11 +68,15 @@ Tudo que vem do navegador é **não confiável**: corpo, query, parâmetros e he
 
 | ID | Cenário | Esperado |
 | --- | --- | --- |
-| SEG-01 | Token da Acme em `/companies/lumen/bookings` (GET, POST, DELETE) | 403 |
+| SEG-01 | Token da Acme em `/api/companies/lumen/bookings` (GET, POST, DELETE) | 403 |
 | SEG-02 | Acme apaga reserva da Lumen, e um id que não existe | 404, corpo idêntico |
 | SEG-03 | POST com `companyId` ou `id` no corpo | 400 `VALIDATION` |
 | SEG-04 | Disponibilidade com reservas de várias empresas | Só `startsAt` e `endsAt` |
-| SEG-18 | `GET /rooms` e disponibilidade sem token | 401 |
+| SEG-18 | `GET /api/rooms` sem token | 200 com o catálogo |
+| SEG-19 | Disponibilidade sem token | 401 |
+| SEG-20 | `GET /api/config` sem token | 401 |
+| SEG-21 | `GET /api/companies` sem token | 200 só com id/nome |
+| SEG-22 | Acme edita id de reserva da Lumen pelo path Acme | 404, sem alterar a reserva Lumen |
 | SEG-05 | Muitas requisições com token errado | 429 com `Retry-After`. Reincidência bloqueia mais. Outro IP não é afetado |
 | SEG-06 | Token certo e errado do mesmo tamanho | Mesma resposta de erro |
 | SEG-07 | Requisição com `Authorization` | O log não contém o token |
