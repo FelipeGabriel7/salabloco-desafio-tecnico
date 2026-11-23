@@ -8,9 +8,16 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
-    "types": ["node"],
-    "noEmit": true
+    "types": [
+      "node"
+    ],
+    "noEmit": true,
+    "rewriteRelativeImportExtensions": true
   },
-  "include": ["src", "api", "tests", "vitest.config.ts"]
+  "include": [
+    "src",
+    "api",
+    "tests",
+    "vitest.config.ts"
+  ]
 }
