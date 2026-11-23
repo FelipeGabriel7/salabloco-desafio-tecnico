@@ -120,7 +120,7 @@ O pipeline fica em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) e roda
 | Contrato | Coleção Bruno contra a API rodando |
 | Interface | Playwright no Chromium |
 | Performance | Artillery com limites de p95 e p99 |
-| Relatório | Allure consolidado e resumo de cada etapa na página da execução |
+| Relatório | Allure consolidado, publicado no GitHub Pages em https://felipegabriel7.github.io/salabloco-desafio-tecnico/, e resumo de cada etapa na página da execução |
 | Deploy | Só na `main`, só com tudo verde: publica API e front na Vercel |
 
 ## Deploy na Vercel
