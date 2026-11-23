@@ -41,6 +41,13 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
     });
   }
 
+  if (error instanceof Error && "type" in error && error.type === "entity.too.large") {
+    return res.status(413).json({
+      code: "PAYLOAD_TOO_LARGE",
+      message: messages.payloadTooLarge,
+    });
+  }
+
   if (error instanceof AppError) {
     return res.status(error.status).json({
       code: error.code,

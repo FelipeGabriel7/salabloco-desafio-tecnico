@@ -41,6 +41,10 @@ export async function listRooms(path: string) {
   return (await readDatabase(path)).rooms;
 }
 
+export async function listCompanies(path: string) {
+  return (await readDatabase(path)).companies;
+}
+
 export async function roomExists(path: string, roomId: string) {
   const rooms = await listRooms(path);
   return rooms.some((room) => room.id === roomId);
@@ -80,6 +84,42 @@ export function createIfFree(path: string, input: Omit<Booking, "id" | "createdA
 
     const booking: Booking = { ...input, id: randomUUID(), createdAt: new Date().toISOString() };
     database.bookings.push(booking);
+
+    await saveDatabase(path, database);
+    return { booking };
+  });
+}
+
+export function updateIfFree(
+  path: string,
+  companyId: string,
+  id: string,
+  input: Omit<Booking, "id" | "companyId" | "createdAt">,
+): Promise<{ booking: Booking } | { conflict: Booking } | { notFound: true }> {
+  return queueWrite(async () => {
+    const database = await readDatabase(path);
+    const index = database.bookings.findIndex(
+      (booking) => booking.id === id && booking.companyId === companyId,
+    );
+
+    if (index < 0) return { notFound: true };
+
+    const conflict = database.bookings.find(
+      (booking) =>
+        booking.id !== id &&
+        booking.roomId === input.roomId &&
+        overlaps(
+          Date.parse(input.startsAt),
+          Date.parse(input.endsAt),
+          Date.parse(booking.startsAt),
+          Date.parse(booking.endsAt),
+        ),
+    );
+
+    if (conflict) return { conflict };
+
+    const booking = { ...database.bookings[index], ...input };
+    database.bookings[index] = booking;
 
     await saveDatabase(path, database);
     return { booking };

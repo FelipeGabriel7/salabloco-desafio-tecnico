@@ -4,6 +4,7 @@ import { errorHandler, authenticate } from "./shared/middleware.ts";
 import { messages } from "./shared/utils/messages.ts";
 import { bookingRoutes } from "./modules/bookings/routes/bookings.routes.ts";
 import { roomRoutes } from "./modules/rooms/rooms.routes.ts";
+import { listCompanies } from "./infrastructure/persistence/json/json-booking.repository.ts";
 
 export const app = express();
 
@@ -14,6 +15,14 @@ app.use(express.json({
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+app.get("/api/companies", async (_req, res) => {
+  res.json(await listCompanies(config.dbPath));
+});
+
+app.get("/api/config", authenticate, (_req, res) => {
+  res.json({ timezone: config.timezone });
 });
 
 app.use("/api/rooms", roomRoutes(config.dbPath, config.timezone));

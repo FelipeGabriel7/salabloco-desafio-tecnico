@@ -1,11 +1,12 @@
 export const messages = {
   invalidJson: "JSON inválido.",
+  payloadTooLarge: "O corpo da requisição passa de 16 kb.",
   invalidRequest: "Dados inválidos.",
   invalidDate: "Data inválida. Use AAAA-MM-DD.",
   unauthorized: "Token inválido ou ausente.",
   forbidden: "Você não tem acesso a esta empresa.",
   notFound: "Não encontrado.",
-  endBeforeStart: "O fim deve ser depois do início.",
+  endBeforeStart: "A data inicial é maior que a data final, ajuste e tente novamente.",
   durationTooShort: "A reserva deve ter no mínimo 30 minutos.",
   durationTooLong: "A reserva deve ter no máximo 4 horas.",
   outsideOpeningHours: "O coworking funciona das 07:00 às 22:00.",
