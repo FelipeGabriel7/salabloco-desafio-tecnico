@@ -31,7 +31,7 @@ Supertest chama o `app` do Express direto, sem abrir porta, e deixa fixar o rel�
 
 - **Ganho:** a maioria dos testes roda em segundos, e o navegador cobre só os fluxos que o usuário vê.
 - **Custo:** os testes da API configuram o ambiente antes de importar o `app`, porque `config.ts` lê o ambiente na importação.
-- **Defeito conhecido em teste:** um cenário marcado como falha esperada (`test.fail`) avisa quando o defeito for corrigido.
+- **Defeito conhecido em teste:** quando há um defeito conhecido, o cenário fica marcado como falha esperada (`test.fail`) até a correção, e então volta a ser um teste normal. Foi o caso da mensagem do 403 no login.
 
 ## Alternativas descartadas
 

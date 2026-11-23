@@ -1,6 +1,6 @@
 # ADR 0008. Contrato de erros e códigos HTTP
 
-> **Atualização:** a API usa strings em `AppError`, não um enum. A resposta `429` abaixo é uma proposta, pois rate limit não está implementado. O contrato atual está em [API](../../api/api.md).
+> **Atualização:** a API usa strings em `AppError`, não um enum. O contrato atual está em [API](../../api/api.md).
 
 ## Decisão
 

@@ -1,6 +1,6 @@
 # Segurança
 
-> **Estado atual:** esta matriz inclui ameaças e controles planejados. Rate limit, bloqueio escalonado, helmet/CSP, logger com redação e rejeição de tokens fracos em produção não foram encontrados na implementação atual. Os cenários correspondentes são pendências, não garantias já implementadas.
+> **Estado atual:** esta matriz inclui ameaças e controles planejados. Helmet/CSP, logger com redação e rejeição de tokens fracos em produção não estão implementados. Os cenários correspondentes são pendências, não garantias já implementadas.
 
 Cada ameaça tem um controle e um teste que o prova. O ponto central é o **isolamento entre empresas**.
 
@@ -25,11 +25,11 @@ Tudo que vem do navegador é **não confiável**: corpo, query, parâmetros e he
 | A-05 | Vazar dados de terceiros na disponibilidade | Resposta só com `startsAt` e `endsAt`, e só para quem tem token | SEG-04 |
 | A-05b | Consultar catálogos sem credencial | Empresas e salas públicas contêm apenas id/nome/capacidade | SEG-18, SEG-21 |
 | A-05c | Obter configuração sem token | `/api/config` exige token e devolve apenas timezone | SEG-20 |
-| A-06 | Descobrir token por tentativa e erro | **Pendente:** limite de requisições e bloqueio escalonado ([ADR 0012](../arquitetura/adr/0012-limite-de-requisicoes.md)) | SEG-05 planejado |
+| A-06 | Descobrir token por tentativa e erro | Limite de requisições, bloqueio escalonado ([ADR 0012](../arquitetura/adr/0012-limite-de-requisicoes.md)) e comparação de token em tempo constante (`timingSafeEqual` sobre SHA-256) | SEG-05 |
 | A-07 | Vazar o token pelo tempo de resposta | Trade-off conhecido: comparação simples no desafio; produto real deve usar comparação em tempo constante | SEG-06 |
 | A-08 | Token em log ou erro | Não há logger de requisição dedicado com redação; evitar registrar tokens | SEG-07 planejado |
 | A-09 | Vazar detalhes internos | 500 genérico, sem stack trace | SEG-08 |
-| A-10 | Esgotar recursos | Limite de corpo de 16 KB e tamanho dos campos; rate limit pendente | SEG-09 |
+| A-10 | Esgotar recursos | Limite de corpo de 16 KB, tamanho dos campos e limite de requisições por IP | SEG-09 |
 | A-11 | Injeção por entrada | Validação zod. React escapa por padrão; sem `dangerouslySetInnerHTML` | SEG-10 |
 | A-12 | Chamadas do front para a API no desenvolvimento | Proxy do Vite em `/api`; em produção, servir front e API na mesma origem | SEG-11 |
 | A-13 | Clickjacking, sniffing de tipo | `helmet` e CSP não configurados na API; avaliar na hospedagem | SEG-12 planejado |

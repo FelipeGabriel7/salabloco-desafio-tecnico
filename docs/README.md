@@ -39,7 +39,7 @@ docs/
 | [0009](arquitetura/adr/0009-monorepo.md) | Um repositório, uma pasta por domínio |
 | [0010](arquitetura/adr/0010-frontend.md) | Front-end |
 | [0011](arquitetura/adr/0011-estrategia-de-testes.md) | Estratégia de testes |
-| [0012](arquitetura/adr/0012-limite-de-requisicoes.md) | Proposta: limite de requisições (429), não implementada |
+| [0012](arquitetura/adr/0012-limite-de-requisicoes.md) | Limite de requisições (429) com bloqueio escalonado |
 | [0013](arquitetura/adr/0013-configuracao-e-segredos.md) | Configuração e segredos: `.env` e `.env.example` |
 | [0014](arquitetura/adr/0014-enums-e-interfaces.md) | Proposta: enums e interfaces, não implementada integralmente |
 | [0015](arquitetura/adr/0015-deploy-na-vercel.md) | Deploy na Vercel, pelo pipeline |

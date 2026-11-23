@@ -1,6 +1,6 @@
 # Estratégia de QA
 
-> **Leitura da matriz:** os casos abaixo incluem cenários planejados e objetivos de cobertura, não apenas testes implementados. Stryker, execução semanal de performance e rate limit não estão configurados no pipeline atual; consulte os testes e a execução do CI para verificar cobertura e resultados reais.
+> **Leitura da matriz:** os casos abaixo incluem cenários planejados e objetivos de cobertura, não apenas testes implementados. Stryker e execução semanal de performance não estão configurados no pipeline atual; consulte os testes e a execução do CI para verificar cobertura e resultados reais.
 
 Decisão no [ADR 0011](../arquitetura/adr/0011-estrategia-de-testes.md). Aqui: o que testar, em que nível e como cada regra é provada.
 
@@ -119,7 +119,7 @@ Segurança: SEG-01 a SEG-17 em [seguranca.md](seguranca.md).
 ## Como cada camada é montada
 
 - **Unitário:** services com repositório em arquivo temporário e relógio fixo. Nomes descrevem comportamento ("recusa reserva com 29 minutos").
-- **API:** Supertest importa o app, usando arquivo temporário nos testes locais; há cenários de concorrência. Rate limit não está implementado. Nos testes E2E, a API iniciada pelo Playwright também usa arquivo temporário quando não reutiliza um servidor existente.
+- **API:** Supertest importa o app, usando arquivo temporário nos testes locais; há cenários de concorrência. O limite de requisições tem testes próprios com limites baixos; nos demais, ele é configurado alto. Nos testes E2E, a API iniciada pelo Playwright também usa arquivo temporário quando não reutiliza um servidor existente.
 - **Interface:** Page Objects, seletores por papel e rótulo, sem `waitForTimeout`, login reaproveitado, trace e screenshot das falhas.
 - **Contrato:** `bru run` confere status e formato conforme o OpenAPI.
 - **Mutação:** Stryker altera regras dos services de propósito e confere se algum teste falha. Meta: 80%.

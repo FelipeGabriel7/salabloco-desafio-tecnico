@@ -187,7 +187,7 @@ O pipeline fica em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) e roda
 
 | Etapa | O que garante |
 | --- | --- |
-| Tipos, unitários e API | `typecheck`, Vitest do front e da API, build |
+| Tipos, lint, unitários e API | `typecheck`, ESLint (sem nenhum aviso), Vitest do front e da API, build |
 | Segurança | Gitleaks, `npm audit` das dependências de produção e checagem de que nenhum token local foi para o bundle do front |
 | Análise estática | CodeQL |
 | Contrato | Coleção Bruno contra a API rodando |
@@ -197,7 +197,7 @@ O pipeline fica em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) e roda
 | Relatório | Allure consolidado, publicado no GitHub Pages em https://felipegabriel7.github.io/salabloco-desafio-tecnico/, e resumo de cada etapa na página da execução |
 | Deploy | Configurado para a `main` após as verificações exigidas; depende dos segredos da Vercel |
 
-O pipeline executa typecheck, build e testes; **não há comando de lint configurado**. A publicação e o resultado de uma execução específica devem ser conferidos na aba Actions.
+O resultado de cada execução fica na aba Actions do GitHub, com o resumo das etapas.
 
 ## Deploy na Vercel
 
@@ -243,10 +243,7 @@ Validei em produção: uma reserva criada aparece em 15 leituras simultâneas, o
 
 ## O que ainda falta
 
-- No login, token de outra empresa (403) mostra "Confira se a API está ativa" em vez de "token inválido". O teste já existe e aparece no relatório como falha esperada.
-- Limite de requisições (429), proposto no [ADR 0012](docs/arquitetura/adr/0012-limite-de-requisicoes.md).
-- Comparação de token com `timingSafeEqual`.
-- Lint no CI.
+- Levar os contadores do limite de requisições para o Redis. Hoje ficam em memória, então na Vercel cada instância conta separado ([ADR 0012](docs/arquitetura/adr/0012-limite-de-requisicoes.md)).
 - Se o volume crescer: trocar o Redis por um banco transacional (Postgres com constraint de exclusão), em vez de regravar o banco inteiro a cada escrita.
 
 ## O que ficou de fora

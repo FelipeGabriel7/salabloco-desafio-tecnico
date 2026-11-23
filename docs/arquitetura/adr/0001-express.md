@@ -4,12 +4,12 @@
 
 Uso **Express 5 com TypeScript** no back-end.
 
-Escolhi o Express pela simplicidade e familiaridade. Na versão 5, um erro lançado dentro de um handler `async` chega ao error handler. A autenticação usa middleware e a validação do body de reservas fica no controller; limite de requisições permanece como proposta, não implementado.
+Escolhi o Express pela simplicidade e familiaridade. Na versão 5, um erro lançado dentro de um handler `async` chega ao error handler. A autenticação usa middleware e a validação do body de reservas fica no controller; o limite de requisições também é um middleware ([ADR 0012](0012-limite-de-requisicoes.md)).
 
 ## Consequências
 
 - **Ganho:** o fluxo é simples de ler, e eu consigo manter e explicar tudo o que escrevi.
-- **Custo:** autenticação e validação precisam ser implementadas e mantidas na aplicação; limite de requisições ainda é uma pendência.
+- **Custo:** autenticação e validação precisam ser implementadas e mantidas na aplicação.
 - **Risco:** esquecer uma proteção. Mitigo com o [modelo de ameaças](../../qualidade/seguranca.md) como checklist e com testes de segurança (SEG-xx) que falham se uma proteção sumir.
 
 ## Alternativas descartadas

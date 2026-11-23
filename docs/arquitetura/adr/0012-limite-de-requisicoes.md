@@ -1,7 +1,5 @@
 # ADR 0012. Limite de requisições (429)
 
-> **Status: proposta, não implementada.** O conteúdo abaixo descreve uma alternativa planejada, não um controle existente. A API atual não registra middleware de rate limit nem retorna `429` por esse motivo.
-
 ## Decisão
 
 Protejo a API contra força bruta de token e esgotamento de recursos, com bloqueio temporário proporcional ao pico.
@@ -14,13 +12,14 @@ Protejo a API contra força bruta de token e esgotamento de recursos, com bloque
 - Respondo **429** com `Retry-After` (em segundos) e `code: RATE_LIMITED`.
 - A janela deslizante evita o efeito de borda da janela fixa, e o bloqueio escalonado cresce com a reincidência.
 - Tudo é configurável por ambiente (`RATE_LIMIT_*`, `AUTH_FAIL_*`, `AUTH_BLOCK_SECONDS`).
-- O middleware fica em `apps/api/src/shared/middlewares/rate-limit.ts`, **antes** da autenticação, para limitar também quem não se autentica.
-- Uso `express-rate-limit` para a janela e uma camada própria para o escalonamento. O armazenamento é em memória, atrás de uma interface que dá para trocar por Redis.
+- O middleware fica em `apps/api/src/shared/rate-limit.ts` e é o **primeiro** do `app.ts`, antes da leitura do corpo e da autenticação, para limitar também quem não se autentica.
+- Implementei sem biblioteca: uma lista de horários por IP (janela deslizante), uma lista de falhas 401 por IP e um registro de bloqueios com contador de reincidência. Tudo em memória.
+- Na Vercel, ligo `trust proxy` para usar o IP real do cliente.
 
 Atendo "proporcional ao pico" com escalonamento por reincidência, e não com um limite adaptativo à carga, que seria muito mais complexo.
 
 ## Consequências
 
 - **Ganho:** barra força bruta e rajada com pouco código, e o `Retry-After` diz ao cliente o que fazer.
-- **Custo:** por estar em memória, vale para uma instância só. O limite é por IP, então usuários atrás do mesmo NAT o compartilham, e atrás de proxy é preciso configurar `X-Forwarded-For`.
-- **Testes:** 429 com `Retry-After` acima do limite (API); 10 tokens errados bloqueiam e depois liberam (API); reincidência dobra o bloqueio (unitário); outro IP não é afetado (API). Nos testes normais o limite não atrapalha ([ADR 0011](0011-estrategia-de-testes.md)).
+- **Custo:** por estar em memória, vale por instância: na Vercel, cada instância da função conta separadamente, e o contador zera quando a instância é reciclada. Para um limite global, os contadores iriam para o Redis. O limite é por IP, então usuários atrás do mesmo NAT o compartilham, e atrás de proxy é preciso configurar `X-Forwarded-For`.
+- **Testes** (`apps/api/tests/integration/rate-limit.test.ts` e `rate-limit-app.test.ts`): 429 com `Retry-After` e `RATE_LIMITED` acima do limite; a janela deslizante libera quando a requisição mais antiga sai; outro IP não é afetado; falhas 401 seguidas bloqueiam e depois liberam; reincidência dobra o bloqueio; respostas de sucesso não contam como falha; a API real aplica o limite antes das rotas. Nos outros testes o limite é configurado alto, para não atrapalhar ([ADR 0011](0011-estrategia-de-testes.md)).
